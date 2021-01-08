@@ -62,7 +62,7 @@ mock_ih_cell_transformed = switch_coord_type(mock_ih_cell, Float64)
 @testset "Switching of coordinate type" begin
     @test typeof(tcell_transformed) == TrivialCell{3,Int}
     @test typeof(mock_h_cell_transformed) == HomogeneousCell{3, Float64, Nothing}
-    @test typeof(mock_ih_cell_transformed) == InhomogeneousCell{3,Float64, 2, Nothing}
+    @test typeof(mock_ih_cell_transformed) <: InhomogeneousCell{3,Float64, 2, Nothing}
     @test tcell_transformed[1] == SVector(0,0,0)
     @test mock_h_cell_transformed[2] == SVector(1.0,1.0,1.0)
     @test mock_ih_cell_transformed[1,2] == SVector(1.0,1.0,1.0)

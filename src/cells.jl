@@ -47,11 +47,11 @@ $(TYPEDFIELDS)
 
 Unordered inhomogeneous collection of nodes in `D`-dimensional space. This type allows one to partition the nodes of the cell into several groups. Different groups of nodes may correspond to the different classes of physical objects occupying these nodes.
 """
-struct InhomogeneousCell{D, T, N, L<:Union{Symbol,Nothing}} <: AbstractCell{D, T}
+struct InhomogeneousCell{D, T, N, L<:Union{Symbol,Nothing}, T′} <: AbstractCell{D, T}
     """
     Coordinates of nodes.
     """
-    cell_vectors::ArrayPartition{T, NTuple{N, Vector{SVector{D, T}}}}
+    cell_vectors::ArrayPartition{T′, NTuple{N, Vector{SVector{D, T}}}}
     """
     Sizes of the homogeneous groups inside inhomogeneous cell.
     """
@@ -60,13 +60,13 @@ struct InhomogeneousCell{D, T, N, L<:Union{Symbol,Nothing}} <: AbstractCell{D, T
     Label of the cell.
     """
     label::L
-    InhomogeneousCell(cell_vectors::ArrayPartition{T, NTuple{N, Vector{SVector{D, T}}}}, label::L) where {T,N,D, L<:Union{Symbol,Nothing}} = new{D,T,N,L}(cell_vectors, Tuple(length.(cell_vectors.x)), label)
+    InhomogeneousCell(cell_vectors::ArrayPartition{T′, NTuple{N, Vector{SVector{D, T}}}}, label::L) where {T′,T,N,D, L<:Union{Symbol,Nothing}} = new{D,T,N,L,T′}(cell_vectors, Tuple(length.(cell_vectors.x)), label)
 end
 
 ### InhomogeneousCell constructors
 
 @inline InhomogeneousCell(cell_vectors; label = nothing) = InhomogeneousCell(cell_vectors, label)
-function InhomogeneousCell(cell_vectors::ArrayPartition{T, NTuple{N, Vector{NTuple{D,T}}}}; label::Union{Symbol,Nothing} = nothing) where {T,N,D}
+function InhomogeneousCell(cell_vectors::ArrayPartition{T′, NTuple{N, Vector{NTuple{D,T}}}}; label::Union{Symbol,Nothing} = nothing) where {T′,T,N,D}
     new_cell_vectors = similar(cell_vectors, SVector{D,T})
     new_cell_vectors .= cell_vectors
     return InhomogeneousCell(cell_vectors, label)
