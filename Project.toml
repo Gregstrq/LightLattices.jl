@@ -1,0 +1,15 @@
+name = "LightLattices"
+uuid = "c2d87ffe-efce-4f64-b293-8fcb5ddda528"
+authors = ["Grigory Starkov <grigorii.starkov@gmail.com>"]
+version = "0.1.0"
+
+[deps]
+DocStringExtensions = "ffbed154-4ef7-542d-bbb7-c09d3a79fcae"
+RecursiveArrayTools = "731186ca-8d62-57ce-b412-fbd966d074cd"
+StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
+
+[compat]
+julia = "^1.5.2"
+StaticArrays = "^1.0.1"
+RecursiveArrayTools = "^2.9.0"
+DocStringExtensions = "^0.8.3"
