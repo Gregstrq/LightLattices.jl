@@ -58,12 +58,12 @@ fbasis = hcat(a*[0.5, 0.5*sqrt(3), 0.0],
 ```
 The unit cell for magnetically active sublattice of fluorapatite contains two F nuclei at positions
 ```math
-[0.0,0.0,0.25],\quad [0.0,0.0,0.75]
+[0.0,0.0,0.25],\quad [0.0,0.0,0.75],
 ```
 and six P nuclei at positions
 ```math
 \begin{array}{lll}
-[x,y,0.25], & [1-y,x-y,0.25], & [y-x,1-x,0.25]\\
+[x,y,0.25], & [1-y,x-y,0.25], & [y-x,1-x,0.25],\\
 [1-x,1-y,0.75], & [y, y-x,0.75], & [x-y, x, 0.75],
 \end{array}
 ```
