@@ -1,0 +1,5 @@
+# Index
+
+```@autodocs
+Modules = [LightLattices]
+```

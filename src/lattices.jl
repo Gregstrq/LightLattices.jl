@@ -69,14 +69,18 @@ function RegularLattice(lattice_dims::NTuple{D, Int}, basis::SMatrix{D,D,T1}, un
 end
 
 """
-`RegularLattice(lattice_dims::NTuple{D, Int}, a::T=1; periodic=true)`
+`RegularLattice(lattice_dims::NTuple{D, Int}, a::T=1; label=:cubic, periodic=true)`
 
 Constructs hypercubic lattice with lattice parameter `a` and trivial unit cell.
 """
-function RegularLattice(lattice_dims::NTuple{D, Int}, a::T=1; periodic=true) where {D, T<:Number}
+function RegularLattice(lattice_dims::NTuple{D, Int}, a::T=1; periodic=true, label=:cubic) where {D, T<:Number}
     basis = one(SMatrix{D,D,Int})*a
     unit_cell = TrivialCell{D,T}()
-    return RegularLattice(lattice_dims, basis, unit_cell, :cubic, periodic)
+    return RegularLattice(lattice_dims, basis, unit_cell, label, periodic)
+end
+function RegularLattice(lattice_dims::NTuple{D,Int}, basis::SMatrix{D,D,T}; label=:simple, periodic = true) where {D,T}
+    unit_cell = TrivialCell{D,T}()
+    return RegularLattice(lattice_dims, basis, unit_cell, label, periodic)
 end
 """
 `RegularLattice(lattice_dims::NTuple{D, Int}, basis::SMatrix{D,D}, unit_cell::AbstractCell{D}; label=nothing, periodic=true)`

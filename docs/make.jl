@@ -2,14 +2,18 @@ using Documenter
 using LightLattices
 
 makedocs(
-    sitename = "LightLattices",
-    format = Documenter.HTML(),
-    modules = [LightLattices]
+    sitename = "LightLattices.jl",
+    format = Documenter.HTML(; prettyurls = get(ENV, "CI", nothing) == "true"),
+    modules = [LightLattices],
+    authors = "Grigory Starkov",
+    pages = ["Contents" => "index.md",
+             "Manual" => "manual.md",
+             "Examples" => "examples.md",
+             "Index" => "list.md"
+            ]
 )
 
-# Documenter can also automatically deploy documentation to gh-pages.
-# See "Hosting Documentation" and deploydocs() in the Documenter manual
-# for more information.
-#=deploydocs(
-    repo = "<repository url>"
-)=#
+deploydocs(
+    repo = "github.com/Gregstrq/LightLattices.jl.git",
+    devbranch = "main"
+)
