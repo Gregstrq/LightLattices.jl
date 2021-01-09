@@ -71,7 +71,7 @@ cell[i]
 
  `TrivialCell` is used by default when no unit cell is specified. It corresponds to a unit cell with single node.
 
-For consistency of interface, `TrivialCell` behaves like a `HomoegeneousCell` with single node, which has zero coordinates.
+For consistency of interface, `TrivialCell` behaves like a `HomogeneousCell` with single node, which has zero coordinates.
 One can even index into it:
 ```julia
 getindex(::TrivialCell{D,T}, 1) = zero(SVector{D,T})

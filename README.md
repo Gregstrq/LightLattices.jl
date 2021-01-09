@@ -25,6 +25,9 @@ which returns the vector connecting the `I2`-th node with the `I1`-th node.
 In the case of `RegularLattice`-s with periodic boundary conditions, `relative_coordinate` returns the shortest connecting vector.
 (Actually, in the case of complex unit cell, there can be several "shortest" vectors. The problem is resolved by a simple heuristic, described in the docs).
 
+There are three available types to describe the unit cell: `HomogeneousCell`, `TrivialCell` and `InhomogeneousCell`.
+`HomogeneousCell` refers to a homogeneous collection of nodes. `TrivialCell` behaves like `HomogeneousCell` with single node at the origin (zero coordinates). Finally, `InhomogeneousCell` is useful in the situation where one need to distinguish between several groups of nodes in the unit cell. For example, we can have several groupes of nodes corresponding to the different types of nuclei which occupy these nodes.
+
 
 
 ## Examples
