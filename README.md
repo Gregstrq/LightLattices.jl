@@ -3,7 +3,7 @@
 The package provides a convenient interface to work with Lattices with arbitrary unit cells.
 
 
- For the exported types of unit cells and lattices, it defines the array interface which allows to access the coordinate of specific node by its index. In addition to that, it provides a function `relative_coordinate` whih allows to calculate the shortest vector connecting the two nodes.
+ For the exported types of unit cells and lattices, it defines the array interface which allows to access the coordinate of specific node by its index. In addition to that, it provides a function `relative_coordinate` which allows to calculate the shortest vector connecting the two nodes.
 
 [![Build status (Github Actions)](https://github.com/Gregstrq/LightLattices.jl/workflows/CI/badge.svg)](https://github.com/Gregstrq/LightLattices.jl/actions)
 [![codecov.io](http://codecov.io/github/Gregstrq/LightLattices.jl/coverage.svg?branch=main)](http://codecov.io/github/Gregstrq/LightLattices.jl?branch=main)
