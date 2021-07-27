@@ -11,7 +11,7 @@ $(TYPEDFIELDS)
 
 This type describes a regular arrangment of nodes in `D`-dimensional space with boundary condition `PB` (`PB=true` for periodic boundary conditions, `PB=false` for free periodic boundary conditions). A general lattice consists of identicall cells (combinations of nodes) arranged as a Bravais lattice.
 """
-struct RegularLattice{D, T, PB, CT, L<:Union{Symbol,Nothing}, D′} <: AbstractLattice{D, T, PB}
+struct RegularLattice{D, T, PB, CT, L<:Union{Symbol,Nothing}} <: AbstractLattice{D, T, PB}
     """
     The number of basis cells along each of the basis directions.
     """
@@ -56,8 +56,7 @@ struct RegularLattice{D, T, PB, CT, L<:Union{Symbol,Nothing}, D′} <: AbstractL
         @assert D>=1
         num_of_cells = prod(lattice_dims)
         central_cell = CartesianIndex(div.(lattice_dims,2).+1)
-        D′ = D + effective_dim(unit_cell)
-        new{D, T, PB, typeof(unit_cell), typeof(label), D′}(lattice_dims, basis, unit_cell, label, num_of_cells, length(unit_cell)*num_of_cells, central_cell)
+        new{D, T, PB, typeof(unit_cell), typeof(label)}(lattice_dims, basis, unit_cell, label, num_of_cells, length(unit_cell)*num_of_cells, central_cell)
     end
 end
 
@@ -65,7 +64,7 @@ end
 
 function RegularLattice(lattice_dims::NTuple{D, Int}, basis::SMatrix{D,D,T1}, unit_cell::AbstractCell{D,T2}, label, PB) where {D,T1,T2}
     T = promote_type(T1,T2)
-    return RegularLattice(lattice_dims::NTuple{D, Int}, SMatrix{D,D,T}(basis), switch_coord_type(unit_cell, T), label, PB)
+    return RegularLattice(lattice_dims, SMatrix{D,D,T}(basis), switch_coord_type(unit_cell, T), label, PB)
 end
 
 """
@@ -93,8 +92,9 @@ RegularLattice(lattice_dims::NTuple{D, Int}, basis::SMatrix{D,D}, unit_cell::Abs
 """
 $(TYPEDSIGNATURES)
 
-Return the number of separate groups for lattice with inhomogeneous unit cell.
+Return the number of lattice separate groups.
 """
+@inline num_of_groups(lattice::RegularLattice{D,T,PB,<:HomogeneousCell}) where {D,T,PB} = 1
 @inline num_of_groups(lattice::RegularLattice{D,T,PB,<:InhomogeneousCell}) where {D,T,PB} = num_of_groups(lattice.unit_cell)
 
 ##
@@ -112,21 +112,21 @@ When iterating over lattice, the index at the left is iterated faster. For examp
 In the case of periodic lattice, if `CartesianIndex` is outside of the lattice dims, it is simply translated back inside.
 """
 
+Base.@propagate_inbounds function Base.getindex(lattice::RegularLattice{D,T}, I::CartesianIndex{D}, Ic...) where {D,T}
+    @boundscheck check_lattice_index(lattice, I)
+	@boundscheck check_cell_index(lattice.unit_cell, Ic...)
+    @inbounds lattice.basis*SVector{D}(I.I) + lattice.unit_cell[Ic...]
+end
 Base.@propagate_inbounds function Base.getindex(lattice::RegularLattice{D,T,false,<:TrivialCell}, I::CartesianIndex{D}) where {D,T}
     @boundscheck check_lattice_index(lattice, I)
     @inbounds lattice.basis*SVector{D}(I.I)
 end
-Base.@propagate_inbounds function Base.getindex(lattice::RegularLattice{D,T,false,<:Union{HomogeneousCell,InhomogeneousCell}}, I::CartesianIndex{D}, Ic...) where {D,T}
-    @boundscheck check_lattice_index(lattice, I)
-    @boundscheck check_cell_index(lattice, Ic...)
-    @inbounds lattice.basis*SVector{D}(I.I) + lattice.unit_cell[Ic...]
+Base.@propagate_inbounds function Base.getindex(lattice::RegularLattice{D,T,true}, I::CartesianIndex{D}, Ic...) where {D,T}
+    @boundscheck check_cell_index(lattice.unit_cell, Ic...)
+    @inbounds lattice.basis*SVector{D}(mod1.(I.I, lattice.lattice_dims)) + lattice.unit_cell[Ic...]
 end
 Base.@propagate_inbounds function Base.getindex(lattice::RegularLattice{D,T,true,<:TrivialCell}, I::CartesianIndex{D}) where {D,T}
     @inbounds lattice.basis*SVector{D}(mod1.(I.I, lattice.lattice_dims))
-end
-Base.@propagate_inbounds function Base.getindex(lattice::RegularLattice{D,T,true,<:Union{HomogeneousCell,InhomogeneousCell}}, I::CartesianIndex{D}, Ic...) where {D,T}
-    @boundscheck check_cell_index(lattice, Ic...)
-    @inbounds lattice.basis*SVector{D}(mod1.(I.I, lattice.lattice_dims)) + lattice.unit_cell[Ic...]
 end
 
 
@@ -136,9 +136,6 @@ end
 @inline _check_cartesian_index(b, i::Tuple{}, stop::Tuple) = false
 @inline _check_cartesian_index(b, i::Tuple{}, stop::Tuple{}) = b
 
-@inline check_cell_index(lattice::RegularLattice{D,T,PB,<:HomogeneousCell}, ic::Int) where {D,T,PB} = (1<=ic<=length(lattice.unit_cell)) || throw(BoundsError(lattice.unit_cell, ic))
-@inline check_cell_index(lattice::RegularLattice{D,T,PB,<:InhomogeneousCell}, ic::Int, ig::Int) where {D,T,PB} =
-    (1<=ig<=num_of_groups(lattice)) && (1<=ic<=group_size(lattice.unit_cell, ig)) || throw(BoundsError(lattice.unit_cell, (ic, ig)))
 
 
 ## Relative coordinate
@@ -163,17 +160,17 @@ Base.@propagate_inbounds function relative_coordinate(lattice::RegularLattice{D,
     return lattice[first(I1) + lattice.central_cell - first(I2), Base.tail(I1)...] - lattice[lattice.central_cell, Base.tail(I2)...]
 end
 
-Base.@propagate_inbounds function translate_indices(lattice::RegularLattice{D,T,PB,<:TrivialCell}, Is) where {D,T,PB}
-    @boundscheck map(x -> check_lattice_index(lattice, x), Is)
-    return Is
-end
-Base.@propagate_inbounds function translate_indices(lattice::RegularLattice{D,T,PB,<:HomogeneousCell}, Is) where {D,T,PB}
-    @boundscheck map(x -> check_lattice_index(lattice, x), Is)
-    return Base.product(Is, Base.OneTo(length(lattice.unit_cell)))
-end
-Base.@propagate_inbounds function translate_indices(lattice::RegularLattice{D,T,PB,<:InhomogeneousCell}, Is, ig::Int) where {D,T,PB}
-    @boundscheck map(x -> check_lattice_index(lattice, x), Is)
-    return Base.product(Is, Base.OneTo(group_size(lattice.unit_cell, ig)), ig)
-end
+#Base.@propagate_inbounds function translate_indices(lattice::RegularLattice{D,T,PB,<:TrivialCell}, Is) where {D,T,PB}
+#    @boundscheck map(x -> check_lattice_index(lattice, x), Is)
+#    return Is
+#end
+#Base.@propagate_inbounds function translate_indices(lattice::RegularLattice{D,T,PB,<:HomogeneousCell}, Is) where {D,T,PB}
+#    @boundscheck map(x -> check_lattice_index(lattice, x), Is)
+#    return Base.product(Is, Base.OneTo(length(lattice.unit_cell)))
+#end
+#Base.@propagate_inbounds function translate_indices(lattice::RegularLattice{D,T,PB,<:InhomogeneousCell}, Is, ig::Int) where {D,T,PB}
+#    @boundscheck map(x -> check_lattice_index(lattice, x), Is)
+#    return Base.product(Is, Base.OneTo(group_size(lattice.unit_cell, ig)), ig)
+#end
 
 #@inline to_default(lattice::RegularLattice{D,T,PB,<:TrivialCell}, x::Int, y::Int, z::Int) = CartesianIndex

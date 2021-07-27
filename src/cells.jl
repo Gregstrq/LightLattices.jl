@@ -130,14 +130,25 @@ Returns the number of the nodes in the cell.
 @inline Base.length(cell::TrivialCell) = 1
 
 """
-`get_index(cell::AbstractCell, i...)`
+`getindex(cell::AbstractCell, i...)`
 
 Returns the coordinate of the ``i``-th node of the cell. In the case of InhomogeneousCell we can use double index `i = i1, i2` to access ``i_1``-th node of ``i_2``-th group.
 """
-Base.@propagate_inbounds function Base.getindex(cell::AbstractCell, i...) end
-Base.@propagate_inbounds Base.getindex(cell::Union{HomogeneousCell,InhomogeneousCell}, i::Int) = getindex(cell.cell_vectors, i)
-Base.@propagate_inbounds Base.getindex(cell::InhomogeneousCell, ic::Int, ig::Int) = getindex(cell.cell_vectors, ig, ic)
-Base.@propagate_inbounds Base.getindex(cell::TrivialCell{D,T}, i::Int) where {D,T} = (@boundscheck i==1 || throw(BoundsError(cell, i)); zero(SVector{D,T}))
+Base.@propagate_inbounds function Base.getindex(cell::Union{HomogeneousCell, InhomogeneousCell}, ic::Int)
+	@boundscheck check_cell_index(cell, ic)
+	@inbounds getindex(cell.cell_vectors, ic)
+end
+Base.@propagate_inbounds function Base.getindex(cell::InhomogeneousCell, ic::Int, ig::Int)
+	@boundscheck check_cell_index(cell, ic, ig)
+	@inbounds getindex(cell.cell_vectors, ig, ic)
+end
+Base.@propagate_inbounds Base.getindex(cell::TrivialCell{D,T}, i::Int) where {D,T} = (@boundscheck check_cell_index(cell, i); zero(SVector{D,T}))
+
+
+@inline check_cell_index(cell::TrivialCell, i::Int) = i==1 || throw(BoundsError(cell, i))
+@inline check_cell_index(cell::Union{HomogeneousCell,InhomogeneousCell}, ic::Int) = (1<=ic<=length(cell)) || throw(BoundsError(cell, ic))
+@inline check_cell_index(cell::InhomogeneousCell, ic::Int, ig::Int) =
+    (1<=ig<=num_of_groups(cell)) && (1<=ic<=group_size(cell, ig)) || throw(BoundsError(cell, (ic, ig)))
 
 ###
 ### Conversion utilities
@@ -163,14 +174,3 @@ end
 
 Base.@propagate_inbounds relative_coordinate(cell::AbstractCell, i1, i2) = cell[i1...] - cell[i2...]
 
-###
-### Helper function for Lattice indexing.
-
-"""
-effective_dim(cell::AbstractCell)
-
-Returns the number of additional indices which you need to add to Lattice index to describe the position in the cell.
-"""
-effective_dim(cell::TrivialCell) = 0
-effective_dim(cell::HomogeneousCell) = 1
-effective_dim(cell::InhomogeneousCell) = 2

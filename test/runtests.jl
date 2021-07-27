@@ -81,10 +81,18 @@ cubic_lattice_p = RegularLattice((11,11,11), 2.725u"Å")
 @testset "Fluorine sublattice of CaF2 as an example of cubic lattice" begin
     @test cubic_lattice_f.central_cell == CartesianIndex(6,6,6)
     @test_throws BoundsError cubic_lattice_f[11,11,12]
+    @test_throws BoundsError cubic_lattice_f[11,11,11,2]
+    @test_throws BoundsError cubic_lattice_f[CartesianIndex(11,11,11),2]
+    @test cubic_lattice_p[13,24,182] ≈ 2.725u"Å"*SVector(2, 2, 6)
     @test cubic_lattice_p[13,24,182] ≈ 2.725u"Å"*SVector(2, 2, 6)
     @test cubic_lattice_p[CartesianIndex(13,24,182)] ≈ 2.725u"Å"*SVector(2,2,6)
+    @test cubic_lattice_p[CartesianIndex(13,24,182), 1] ≈ 2.725u"Å"*SVector(2,2,6)
     @test relative_coordinate(cubic_lattice_f, CartesianIndex(2,2,6), CartesianIndex(1,1,1)) ≈ 2.725u"Å"*SVector(1,1,5)
+    @test relative_coordinate(cubic_lattice_f, (CartesianIndex(2,2,6),1), (CartesianIndex(1,1,1),1)) ≈ 2.725u"Å"*SVector(1,1,5)
+    @test relative_coordinate(cubic_lattice_f, (2,2,6,1), (1,1,1,1)) ≈ 2.725u"Å"*SVector(1,1,5)
     @test relative_coordinate(cubic_lattice_p, CartesianIndex(13,24,182), CartesianIndex(1,1,1)) ≈ 2.725u"Å"*SVector(1,1,5)
+    @test relative_coordinate(cubic_lattice_p, (CartesianIndex(13,24,182),1), (CartesianIndex(1,1,1),1)) ≈ 2.725u"Å"*SVector(1,1,5)
+    @test relative_coordinate(cubic_lattice_p, (13,24,182,1), (1,1,1,1)) ≈ 2.725u"Å"*SVector(1,1,5)
 end
 
 ### We consider dimensionless diamond lattice here.
@@ -94,13 +102,21 @@ diamond_lattice_f = RegularLattice((11,11,11), dbasis, dcell; label = :fcc, peri
 diamond_lattice_p = RegularLattice((11,11,11), dbasis, dcell; label = :fcc)
 I1 = (CartesianIndex(13,24,182),1)
 I2 = (CartesianIndex(1,1,1),2)
+I1t = (13,24,182,1)
+I2t = (1,1,1,2)
 @testset "Dimensionless diamond lattice as an example of lattice with homogeneous cell" begin
     @test_throws BoundsError diamond_lattice_f[13,24,182,1]
     @test_throws BoundsError diamond_lattice_p[13,24,182,3]
+    @test_throws BoundsError diamond_lattice_f[CartesianIndex(13,24,182),1]
+    @test_throws BoundsError diamond_lattice_p[CartesianIndex(13,24,182),3]
+    @test diamond_lattice_p[CartesianIndex(13,24,182), 1] == dbasis*SVector(2,2,6)
+    @test diamond_lattice_p[CartesianIndex(13,24,182), 2] == dbasis*SVector(2,2,6) + SVector(0.25,0.25,0.25)
     @test diamond_lattice_p[13,24,182, 1] == dbasis*SVector(2,2,6)
     @test diamond_lattice_p[13,24,182, 2] == dbasis*SVector(2,2,6) + SVector(0.25,0.25,0.25)
     @test relative_coordinate(diamond_lattice_p, I1, I2) == dbasis*SVector(1,1,5) - SVector(0.25,0.25,0.25)
     @test relative_coordinate(diamond_lattice_p, I1, I2) == -relative_coordinate(diamond_lattice_p, I2, I1)
+    @test relative_coordinate(diamond_lattice_p, I1t, I2t) == dbasis*SVector(1,1,5) - SVector(0.25,0.25,0.25)
+    @test relative_coordinate(diamond_lattice_p, I1t, I2t) == -relative_coordinate(diamond_lattice_p, I2, I1)
 end
 
 ### Fluorapatite lattice
@@ -108,11 +124,43 @@ end
 fluorapatite_lattice_p = RegularLattice((11,11,11), fbasis, fcell; label = :hexagonal)
 I1 = (CartesianIndex(13,24,182), 5,2)
 I2 = (CartesianIndex(1,1,1), 2,1)
+I1t = (13,24,182, 5,2)
+I2t = (1,1,1, 2,1)
 @testset "Fluorapatite magnetic sublattice as an example of lattice with inhomogeneous cell." begin
+    @test_throws BoundsError fluorapatite_lattice_p[CartesianIndex(13,24,182), 3,1]
     @test_throws BoundsError fluorapatite_lattice_p[13,24,182, 3,1]
-    @test_throws MethodError fluorapatite_lattice_p[13,24,182,3]
+    @test fluorapatite_lattice_p[CartesianIndex(13,24,182), 5,2] == fbasis*SVector(2,2,6) + fcell[5,2]
     @test fluorapatite_lattice_p[13,24,182, 5,2] == fbasis*SVector(2,2,6) + fcell[5,2]
     @test relative_coordinate(fluorapatite_lattice_p, I1, I2) ≈ fbasis*SVector(1,1,5) + fcell[5,2] - fcell[2,1]
     @test relative_coordinate(fluorapatite_lattice_p, I1, I2) ≈ - relative_coordinate(fluorapatite_lattice_p, I2, I1)
+    @test relative_coordinate(fluorapatite_lattice_p, I1t, I2t) ≈ fbasis*SVector(1,1,5) + fcell[5,2] - fcell[2,1]
+    @test relative_coordinate(fluorapatite_lattice_p, I1t, I2t) ≈ - relative_coordinate(fluorapatite_lattice_p, I2t, I1t)
+end
+
+### Sorting utilities
+
+using LightLattices: takes_precedence
+
+@testset "Comparing of the indices" begin
+	@test takes_precedence(1,2) == true
+	@test takes_precedence(2,1) == false
+
+	@test takes_precedence(CartesianIndex(1), CartesianIndex(2)) == true
+	@test takes_precedence(CartesianIndex(2), CartesianIndex(1)) == false
+
+	@test takes_precedence(CartesianIndex(2,3,1), CartesianIndex(1,1,2)) == true
+	@test takes_precedence(CartesianIndex(1,1,2), CartesianIndex(2,3,1)) == false
+
+	@test takes_precedence((CartesianIndex(1,1,2), 3), (CartesianIndex(2,3,1),4)) == true
+	@test takes_precedence((CartesianIndex(2,3,1),4), (CartesianIndex(1,1,2), 3)) == false
+
+	@test takes_precedence((1,1,2, 3), (2,3,1,4)) == true
+	@test takes_precedence((2,3,1,4), (1,1,2, 3)) == false
+
+	@test takes_precedence((CartesianIndex(2,3,1),4,1), (CartesianIndex(1,1,2), 3, 2)) == true
+	@test takes_precedence((CartesianIndex(1,1,2), 3, 2), (CartesianIndex(2,3,1),4,1)) == false
+
+	@test takes_precedence((2,3,1,4,1), (1,1,2, 3, 2)) == true
+	@test takes_precedence((1,1,2, 3, 2), (2,3,1,4,1)) == false
 end
 

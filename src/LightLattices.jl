@@ -21,7 +21,7 @@ Base.@propagate_inbounds function relative_coordinate(collection::AbstractNodeCo
 
 include("cells.jl")
 include("lattices.jl")
-include("rearrange_indices.jl")
+include("utils.jl")
 
 export AbstractNodeCollection
 export AbstractCell, TrivialCell, HomogeneousCell, InhomogeneousCell
