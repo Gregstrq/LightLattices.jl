@@ -21,3 +21,8 @@ Returns `true` if the index `i1` occurs before `i2` while iterating over a node 
 @inline takes_precedence(i1::T, i2::T) where {T<:Union{Int, CartesianIndex}} = isless(i1, i2)
 @inline takes_precedence(i1::T, i2::T) where {T<:NTuple{D,Int}} where D = takes_precedence(CartesianIndex(i1), CartesianIndex(i2))
 @inline takes_precedence(i1::T, i2::T) where {T<:Tuple{CartesianIndex, Int, Vararg{Int}}} = takes_precedence(CartesianIndex(first(i1).I..., Base.tail(i1)...), CartesianIndex(first(i2).I..., Base.tail(i2)...))
+
+### Iteration utils
+
+Base.eachindex(cell::AbstractCell) = cell |> length |> Base.OneTo
+Base.eachindex(lattice::RegularLattice) = Iterators.product(CartesianIndices(lattice.dims), eachindex(lattice.unit_cell))
