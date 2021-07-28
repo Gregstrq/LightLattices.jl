@@ -94,8 +94,11 @@ $(TYPEDSIGNATURES)
 
 Return the number of lattice separate groups.
 """
-@inline num_of_groups(lattice::RegularLattice{D,T,PB,<:HomogeneousCell}) where {D,T,PB} = 1
-@inline num_of_groups(lattice::RegularLattice{D,T,PB,<:InhomogeneousCell}) where {D,T,PB} = num_of_groups(lattice.unit_cell)
+@inline num_of_groups(lattice::RegularLattice) = num_of_groups(lattice.unit_cell)
+
+Base.@propagate_inbounds group_size(lattice::RegularLattice) = lattice.num_of_cells*group_size(lattice.unit_cell)
+
+Base.length(lattice::RegularLattice) = lattice.num_of_nodes
 
 ##
 ## Indexing interface.

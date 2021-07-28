@@ -91,22 +91,6 @@ compute_type(x::Tuple) = promote_type(typeof.(x)...)
 compute_type(x::AbstractVector) = eltype(x)
 
 
-### Helper functions for InhomogeneousCell
-
-"""
-$(TYPEDSIGNATURES)
-
-Return the number of separate groups in Inhomogeneous Cell.
-"""
-@inline num_of_groups(cell::InhomogeneousCell{D,T,N}) where {D,T,N} = N
-
-"""
-$(TYPEDSIGNATURES)
-
-Returns the size of the `ig`-th homogeneous group inside inhomogeneous cell.
-"""
-@inline group_size(cell::InhomogeneousCell, ig::Int) = cell.group_sizes[ig]
-
 ###
 ### TrivialCell type
 
@@ -116,7 +100,6 @@ $(TYPEDEF)
 Trivial cell consisting of one node at the origin of `D`-dimensional coordinate system. The type `T` is used to represent coordinates.
 """
 struct TrivialCell{D, T} <: AbstractCell{D, T} end
-
 
 ###
 ### length for AbstractCell
@@ -128,6 +111,28 @@ Returns the number of the nodes in the cell.
 """
 @inline Base.length(cell::AbstractCell) = length(cell.cell_vectors)
 @inline Base.length(cell::TrivialCell) = 1
+
+###
+### Helper functions to work with cell groups
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the number of separate groups in a cell.
+"""
+@inline num_of_groups(cell::Union{TrivialCell, HomogeneousCell}) = 1
+@inline num_of_groups(cell::InhomogeneousCell{D,T,N}) where {D,T,N} = N
+
+"""
+$(TYPEDSIGNATURES)
+
+Returns the size of the `ig`-th homogeneous group inside a cell.
+"""
+Base.@propagate_inbounds group_size(cell::Union{TrivialCell, HomogeneousCell}, ig::Int) = (@boundscheck ig==1 || throw(ErrorException("Group index is out of range.")); length(cell))
+Base.@propagate_inbounds group_size(cell::InhomogeneousCell, ig::Int) = (@boundscheck 1<=ig<=num_of_groups(cell) || throw(ErrorException("Group index is out of range."));cell.group_sizes[ig])
+
+###
+### Indexing
 
 """
 `getindex(cell::AbstractCell, i...)`
