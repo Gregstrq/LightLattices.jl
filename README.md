@@ -111,6 +111,6 @@ cell_vectors_raw2 = [[x, y, 0.25], [-y, x-y, 0.25], [y-x, -x, 0.25],
 fcell = InhomogeneousCell([fbasis*vec for vec in cell_vectors_raw1], [fbasis*vec for vec in cell_vectors_raw2]; label = :fluorapatite_magnetic)
 ```
 Finally, we can construct the lattice. Let us choose the size of ``11x11x11`` unit cells and periodic boundary conditions.
-```
+```julia
 fluorapatite_magnetic_sublattice = RegularLattice((11,11,11), fbasis, fcell; label = :hexagonal)
 ```
