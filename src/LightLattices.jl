@@ -28,5 +28,6 @@ export AbstractCell, TrivialCell, HomogeneousCell, InhomogeneousCell
 export AbstractLattice, RegularLattice
 export switch_coord_type
 export relative_coordinate
+export num_of_groups, group_size
 
 end

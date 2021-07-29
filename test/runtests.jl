@@ -12,13 +12,24 @@ tcell = TrivialCell{3, Float64}()
     @test_throws BoundsError tcell[2]
     @test tcell[1] == SVector{3, Float64}(0.0,0.0,0.0)
     @test relative_coordinate(tcell, 1, 1) == SVector{3, Float64}(0.0,0.0,0.0)
+	@test num_of_groups(tcell) == 1
+	@test group_size(tcell, 1) == 1
+	@test_throws ErrorException group_size(tcell, 2)
 end
 
 dcell = HomogeneousCell([[0,0,0],[0.25,0.25,0.25]], :diamond)
+dcell_tuples = HomogeneousCell([(0,0.0,0),(0.25,0.25,0.25)], :diamond)
+dcell_unlabeled = HomogeneousCell([[0,0,0],[0.25,0.25,0.25]])
 @testset "Homogeneous unit cell of diamond" begin
     @test_throws BoundsError dcell[3]
     @test dcell[2] == SVector{3,Float64}(0.25,0.25,0.25)
     @test relative_coordinate(dcell, 2, 1) == SVector{3,Float64}(0.25,0.25,0.25)
+	@test typeof(dcell_tuples) == typeof(dcell)
+	@test dcell_tuples.cell_vectors == dcell.cell_vectors
+	@test dcell_unlabeled.label == nothing
+	@test num_of_groups(dcell) == 1
+	@test group_size(dcell, 1) == 2
+	@test_throws ErrorException group_size(dcell, 2)
 end
 
 ### Fluorapatite unit_cell requires introduction of basis.
@@ -50,6 +61,10 @@ fcell = InhomogeneousCell([fbasis*vec for vec in cell_vectors_raw1], [fbasis*vec
     @test relative_coordinate(fcell, (3,2), 2) == fcell_vectors[2,3] - fcell_vectors[1,2]
     @test relative_coordinate(fcell, 5, (2,1)) == fcell_vectors[2,3] - fcell_vectors[1,2]
     @test relative_coordinate(fcell, (3,2), (2,1)) == fcell_vectors[2,3] - fcell_vectors[1,2]
+	@test num_of_groups(fcell) == 2
+	@test group_size(fcell, 1) == 2
+	@test group_size(fcell, 2) == 6
+	@test_throws ErrorException group_size(fcell, 3)
 end
 
 ### Tests for switch_coord_type
@@ -60,6 +75,9 @@ tcell_transformed = switch_coord_type(tcell, Int)
 mock_h_cell_transformed = switch_coord_type(mock_h_cell, Float64)
 mock_ih_cell_transformed = switch_coord_type(mock_ih_cell, Float64)
 @testset "Switching of coordinate type" begin
+	@test switch_coord_type(tcell, Float64) == tcell
+	@test switch_coord_type(mock_h_cell, Int) === mock_h_cell
+	@test switch_coord_type(mock_ih_cell, Int) === mock_ih_cell
     @test typeof(tcell_transformed) == TrivialCell{3,Int}
     @test typeof(mock_h_cell_transformed) == HomogeneousCell{3, Float64, Nothing}
     @test typeof(mock_ih_cell_transformed) <: InhomogeneousCell{3,Float64, 2, Nothing}
@@ -93,6 +111,10 @@ cubic_lattice_p = RegularLattice((11,11,11), 2.725u"Å")
     @test relative_coordinate(cubic_lattice_p, CartesianIndex(13,24,182), CartesianIndex(1,1,1)) ≈ 2.725u"Å"*SVector(1,1,5)
     @test relative_coordinate(cubic_lattice_p, (CartesianIndex(13,24,182),1), (CartesianIndex(1,1,1),1)) ≈ 2.725u"Å"*SVector(1,1,5)
     @test relative_coordinate(cubic_lattice_p, (13,24,182,1), (1,1,1,1)) ≈ 2.725u"Å"*SVector(1,1,5)
+	@test num_of_groups(cubic_lattice_p) == 1
+	@test group_size(cubic_lattice_p, 1) == 11^3
+	@test_throws ErrorException group_size(cubic_lattice_p, 2)
+	@test length(cubic_lattice_p) == 11^3
 end
 
 ### We consider dimensionless diamond lattice here.
@@ -117,6 +139,10 @@ I2t = (1,1,1,2)
     @test relative_coordinate(diamond_lattice_p, I1, I2) == -relative_coordinate(diamond_lattice_p, I2, I1)
     @test relative_coordinate(diamond_lattice_p, I1t, I2t) == dbasis*SVector(1,1,5) - SVector(0.25,0.25,0.25)
     @test relative_coordinate(diamond_lattice_p, I1t, I2t) == -relative_coordinate(diamond_lattice_p, I2, I1)
+	@test num_of_groups(diamond_lattice_p) == 1
+	@test group_size(diamond_lattice_p, 1) == 11^3*2
+	@test_throws ErrorException group_size(diamond_lattice_p, 2)
+	@test length(diamond_lattice_p) == 11^3*2
 end
 
 ### Fluorapatite lattice
@@ -135,6 +161,11 @@ I2t = (1,1,1, 2,1)
     @test relative_coordinate(fluorapatite_lattice_p, I1, I2) ≈ - relative_coordinate(fluorapatite_lattice_p, I2, I1)
     @test relative_coordinate(fluorapatite_lattice_p, I1t, I2t) ≈ fbasis*SVector(1,1,5) + fcell[5,2] - fcell[2,1]
     @test relative_coordinate(fluorapatite_lattice_p, I1t, I2t) ≈ - relative_coordinate(fluorapatite_lattice_p, I2t, I1t)
+	@test num_of_groups(fluorapatite_lattice_p) == 2
+	@test group_size(fluorapatite_lattice_p, 1) == 11^3*2
+	@test group_size(fluorapatite_lattice_p, 2) == 11^3*6
+	@test_throws ErrorException group_size(fluorapatite_lattice_p, 3)
+	@test length(fluorapatite_lattice_p) == 11^3*8
 end
 
 ### Sorting utilities

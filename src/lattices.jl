@@ -96,7 +96,7 @@ Return the number of lattice separate groups.
 """
 @inline num_of_groups(lattice::RegularLattice) = num_of_groups(lattice.unit_cell)
 
-Base.@propagate_inbounds group_size(lattice::RegularLattice) = lattice.num_of_cells*group_size(lattice.unit_cell)
+Base.@propagate_inbounds group_size(lattice::RegularLattice, ig) = lattice.num_of_cells*group_size(lattice.unit_cell, ig)
 
 Base.length(lattice::RegularLattice) = lattice.num_of_nodes
 

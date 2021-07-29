@@ -28,13 +28,12 @@ end
 ### HomogeneousCell constructors
 
 @inline HomogeneousCell(cell_vectors) = HomogeneousCell(cell_vectors, nothing)
-HomogeneousCell(cell_vectors::Vector{NTuple{D,T}}, label::L = nothing) where {D,T, L<:Union{Symbol, Nothing}} = HomogeneousCell(map(SVector{D,T}, cell_vectors), label)
-function HomogeneousCell(cell_vectors::Vector{Vector{T}}, label::Union{Symbol,Nothing}=nothing) where {T}
-    v1 = first(cell_vectors)
-    D = length(v1)
+function HomogeneousCell(cell_vectors::Vector, label::Union{Symbol,Nothing}=nothing)
+    D = first(cell_vectors) |> length
     for i = 2:length(cell_vectors)
         @assert length(cell_vectors[i])==D "All coordinates should have identical dimension."
     end
+	T = promote_type(compute_type.(cell_vectors)...)
     return HomogeneousCell(map(SVector{D,T}, cell_vectors), label)
 end
 
@@ -71,13 +70,6 @@ function InhomogeneousCell(cell_vectors::ArrayPartition{T′, NTuple{N, Vector{N
     new_cell_vectors .= cell_vectors
     return InhomogeneousCell(cell_vectors, label)
 end
-function InhomogeneousCell(cell_vectors::Vector{SVector{D, T}}, splitting::Tuple{Int, Vararg{Int}}; label::Union{Symbol,Nothing} = nothing) where {D,T}
-    end_positions = cumsum((0, splitting...))
-    new_cell_vectors = Tuple(cell_vectors[end_positions[i-1]:end_positions[i]] for i=2:length(end_positions))
-    return InhomogeneousCell(new_cell_vectors, label)
-end
-@inline InhomogeneousCell(cell_vectors::Vector{NTuple{D, T}}, splitting::Tuple{Int, Vararg{Int}}, label::L=nothing) where {D,T, L<:Union{Symbol,Nothing}} =
-    InhomogeneousCell(map(SVector{D,T}, cell_vectors), splitting, label)
 function InhomogeneousCell(vecss::Tuple{Vector, Vector, Vararg{Vector}}, label::Union{Symbol,Nothing})
     T = promote_type(map(x -> promote_type(compute_type.(x)...), vecss)...)
     D = length(vecss |> first |> first)
@@ -163,15 +155,16 @@ Base.@propagate_inbounds Base.getindex(cell::TrivialCell{D,T}, i::Int) where {D,
 
 Converts the type used to represent coordinates from `T` to `T′`.
 """
-function switch_coord_type(cell::AbstractCell{D, T}, ::Type{T′}) where {D, T, T′} end
 switch_coord_type(cell::TrivialCell{D,T}, ::Type{T′}) where {D,T,T′} = TrivialCell{D,T′}()
+@inline switch_coord_type(cell::TrivialCell{D,T}, ::Type{T}) where {D,T} = cell
 switch_coord_type(cell::HomogeneousCell{D,T}, ::Type{T′}) where {D,T,T′} = HomogeneousCell(SVector{D,T′}.(cell.cell_vectors), cell.label)
+@inline switch_coord_type(cell::HomogeneousCell{D,T}, ::Type{T}) where {D,T} = cell
 function switch_coord_type(cell::InhomogeneousCell{D,T}, ::Type{T′}) where {D,T,T′}
     new_cell_vectors = similar(cell.cell_vectors, SVector{D,T′})
     new_cell_vectors .= cell.cell_vectors
     return InhomogeneousCell(new_cell_vectors, cell.label)
 end
-@inline switch_coord_type(cell::AbstractCell{D,T}, ::Type{T}) where {D,T} = cell
+@inline switch_coord_type(cell::InhomogeneousCell{D,T}, ::Type{T}) where {D,T} = cell
 
 ###
 ### Relative coordinate of two nodes in a cell
