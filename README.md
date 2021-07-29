@@ -62,7 +62,7 @@ fluorine_sublattice = RegularLattice((11,11,11), 2.725u"Å"; label=:cubic, peri
 The lattice of diamond is face-centered cubic with a unit cell consisting of two nodes.
 Let us take the size of cube equal to `1`. The following creates diamond lattice with ``11x11x11`` unit cells with periodic boundary conditions:
 ```julia
-using LightLattice
+using LightLattices
 
 fcc_basis = 0.5*hcat([0,1,1],[1,1,0],[1,0,1]) |> SMatrix{3,3}
 

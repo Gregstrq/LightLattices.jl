@@ -89,6 +89,12 @@ Generally, if one needs to access the coordinate of `ic`-th node inside `ig`-th 
 ```julia
 cell[ic, ig]
 ```
+!!! note
+	If one does not care about the groups, one can index into `InhomogeneousCell` as if it was a `HomogeneousCell`:
+	```julia
+	cell[ic]
+	```
+	This works with lattice indexing as well.
  
 The general constructor for the type is
 ```julia
@@ -118,6 +124,8 @@ lattice[I::CartesianIndex{D}, ic::Int]
 ```julia
 lattice[I::CartesianIndex{D}, ic::Int, ig::Int]
 ```
+!!! note
+	One can always index into lattice as if it has a `HomogeneousCell` unit cell, i.e., using the default style for lattices with `HomogeneousCell` unit cell.
 
 ### Alternative style
 
@@ -134,6 +142,8 @@ lattice[x::Int, y::Int, z::Int, ic::Int]
 ```julia
 lattice[x::Int, y::Int, z::Int, ic::Int, ig::Int]
 ```
+!!! note
+	With alternative indexing, one can again use the style for lattices with `HomogeneousCell` unit cell for lattices with other types of unit cell. 
 
 ### Boundary conditions
 
@@ -162,9 +172,6 @@ The format of the indices `I1` and `I2` depends on particular type of the collec
 !!! note
     If the index in default style is multicomponent, it is passed into `relative_coordinate` as a Tuple. Single `Int` or single `CartesianIndex{D}` are considered single-component.
 
-!!! warning
-    At this point, `relative_coordinate` does not support alternative style of indexing for lattices (see [Alternative style](@ref)). Typically, one needs to calculate some coupling constants for all pairs of nodes in the lattice. This can be achieved by computing relative coordinates and substituting them into some interaction function. The indexes for the whole lattice or for it large subset are going to be machine generated anyway.
-
 ### Lattices with periodic boundaries
 
 In the case of the lattice with periodic boundary conditions, one is interested in the shortest connecting vector for two nodes. The meaning of the shortest here is the following.
@@ -191,3 +198,15 @@ The idea is quite simple: both `Ic1` and `Ic2` are translated by the same amount
     ```julia
     relative_coordinate(lattice, I1, I2) == - relative_coordinate(lattice, I2, I1)
     ```
+
+## Iteration
+
+The package provides `eachindex` implementation for all exported cell and lattice types.
+For cells, the iteration order is as follows: first nodes inside a group, then the groups themselves (if there are any groups).
+For lattices, the iteration over the unit cell indices is preceded by th iteration over lattice indices.
+
+In addition, to that, the package provides a function to compare the indices:
+```julia
+takes_precedence(I1, I2)
+```
+This function returns `true` if index `I1` occurs before index `I2` in the iteration order. Correspondingly, it returns `false` otherwise.
