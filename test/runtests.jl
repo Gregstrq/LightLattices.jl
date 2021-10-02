@@ -32,7 +32,7 @@ dcell_unlabeled = HomogeneousCell([[0,0,0],[0.25,0.25,0.25]])
 	@test_throws ErrorException group_size(dcell, 2)
 end
 
-### Fluorapatite unit_cell requires introduction of basis.
+### Fluorapatite basis_cell requires introduction of primitive vectors.
 
 const af = 9.462u"Å"
 const cf = 6.849u"Å"
@@ -40,15 +40,15 @@ const cf = 6.849u"Å"
 const x = 0.369
 const y = 0.389
 
-fbasis = hcat(af*[0.5, 0.5*sqrt(3), 0.0],
+fpvecs = hcat(af*[0.5, 0.5*sqrt(3), 0.0],
               af*[0.5, -0.5*sqrt(3), 0.0],
               cf*[0.0, 0.0, 1.0]
              ) |> SMatrix{3,3}
 cell_vectors_raw1 = [[0.0, 0.0, 0.25], [0.0, 0.0, 0.75]]
 cell_vectors_raw2 = [[x, y, 0.25], [-y, x-y, 0.25], [y-x, -x, 0.25],
                   [-x, -y, 0.75], [y, y-x, 0.75], [x-y, x, 0.75]]
-fcell_vectors = ArrayPartition([fbasis*vec for vec in cell_vectors_raw1], [fbasis*vec for vec in cell_vectors_raw2])
-fcell = InhomogeneousCell([fbasis*vec for vec in cell_vectors_raw1], [fbasis*vec for vec in cell_vectors_raw2]; label = :fluorapatite_magnetic)
+fcell_vectors = ArrayPartition([fpvecs*vec for vec in cell_vectors_raw1], [fpvecs*vec for vec in cell_vectors_raw2])
+fcell = InhomogeneousCell([fpvecs*vec for vec in cell_vectors_raw1], [fpvecs*vec for vec in cell_vectors_raw2]; label = :fluorapatite_magnetic)
 @testset "Inhomogeneous unit cell for magnetic sublattice of fluorapatite" begin
     @test_throws BoundsError fcell[9]
     @test_throws BoundsError fcell[3,1]
@@ -119,9 +119,9 @@ end
 
 ### We consider dimensionless diamond lattice here.
 
-dbasis = 0.5*hcat([0,1,1],[1,1,0],[1,0,1]) |> SMatrix{3,3}
-diamond_lattice_f = RegularLattice((11,11,11), dbasis, dcell; label = :fcc, periodic = false)
-diamond_lattice_p = RegularLattice((11,11,11), dbasis, dcell; label = :fcc)
+dpvecs = 0.5*hcat([0,1,1],[1,1,0],[1,0,1]) |> SMatrix{3,3}
+diamond_lattice_f = RegularLattice((11,11,11), dpvecs, dcell; label = :fcc, periodic = false)
+diamond_lattice_p = RegularLattice((11,11,11), dpvecs, dcell; label = :fcc)
 I1 = (CartesianIndex(13,24,182),1)
 I2 = (CartesianIndex(1,1,1),2)
 I1t = (13,24,182,1)
@@ -131,13 +131,13 @@ I2t = (1,1,1,2)
     @test_throws BoundsError diamond_lattice_p[13,24,182,3]
     @test_throws BoundsError diamond_lattice_f[CartesianIndex(13,24,182),1]
     @test_throws BoundsError diamond_lattice_p[CartesianIndex(13,24,182),3]
-    @test diamond_lattice_p[CartesianIndex(13,24,182), 1] == dbasis*SVector(2,2,6)
-    @test diamond_lattice_p[CartesianIndex(13,24,182), 2] == dbasis*SVector(2,2,6) + SVector(0.25,0.25,0.25)
-    @test diamond_lattice_p[13,24,182, 1] == dbasis*SVector(2,2,6)
-    @test diamond_lattice_p[13,24,182, 2] == dbasis*SVector(2,2,6) + SVector(0.25,0.25,0.25)
-    @test relative_coordinate(diamond_lattice_p, I1, I2) == dbasis*SVector(1,1,5) - SVector(0.25,0.25,0.25)
+    @test diamond_lattice_p[CartesianIndex(13,24,182), 1] == dpvecs*SVector(2,2,6)
+    @test diamond_lattice_p[CartesianIndex(13,24,182), 2] == dpvecs*SVector(2,2,6) + SVector(0.25,0.25,0.25)
+    @test diamond_lattice_p[13,24,182, 1] == dpvecs*SVector(2,2,6)
+    @test diamond_lattice_p[13,24,182, 2] == dpvecs*SVector(2,2,6) + SVector(0.25,0.25,0.25)
+    @test relative_coordinate(diamond_lattice_p, I1, I2) == dpvecs*SVector(1,1,5) - SVector(0.25,0.25,0.25)
     @test relative_coordinate(diamond_lattice_p, I1, I2) == -relative_coordinate(diamond_lattice_p, I2, I1)
-    @test relative_coordinate(diamond_lattice_p, I1t, I2t) == dbasis*SVector(1,1,5) - SVector(0.25,0.25,0.25)
+    @test relative_coordinate(diamond_lattice_p, I1t, I2t) == dpvecs*SVector(1,1,5) - SVector(0.25,0.25,0.25)
     @test relative_coordinate(diamond_lattice_p, I1t, I2t) == -relative_coordinate(diamond_lattice_p, I2, I1)
 	@test num_of_groups(diamond_lattice_p) == 1
 	@test group_size(diamond_lattice_p, 1) == 11^3*2
@@ -147,7 +147,7 @@ end
 
 ### Fluorapatite lattice
 
-fluorapatite_lattice_p = RegularLattice((11,11,11), fbasis, fcell; label = :hexagonal)
+fluorapatite_lattice_p = RegularLattice((11,11,11), fpvecs, fcell; label = :hexagonal)
 I1 = (CartesianIndex(13,24,182), 5,2)
 I2 = (CartesianIndex(1,1,1), 2,1)
 I1t = (13,24,182, 5,2)
@@ -155,11 +155,11 @@ I2t = (1,1,1, 2,1)
 @testset "Fluorapatite magnetic sublattice as an example of lattice with inhomogeneous cell." begin
     @test_throws BoundsError fluorapatite_lattice_p[CartesianIndex(13,24,182), 3,1]
     @test_throws BoundsError fluorapatite_lattice_p[13,24,182, 3,1]
-    @test fluorapatite_lattice_p[CartesianIndex(13,24,182), 5,2] == fbasis*SVector(2,2,6) + fcell[5,2]
-    @test fluorapatite_lattice_p[13,24,182, 5,2] == fbasis*SVector(2,2,6) + fcell[5,2]
-    @test relative_coordinate(fluorapatite_lattice_p, I1, I2) ≈ fbasis*SVector(1,1,5) + fcell[5,2] - fcell[2,1]
+    @test fluorapatite_lattice_p[CartesianIndex(13,24,182), 5,2] == fpvecs*SVector(2,2,6) + fcell[5,2]
+    @test fluorapatite_lattice_p[13,24,182, 5,2] == fpvecs*SVector(2,2,6) + fcell[5,2]
+    @test relative_coordinate(fluorapatite_lattice_p, I1, I2) ≈ fpvecs*SVector(1,1,5) + fcell[5,2] - fcell[2,1]
     @test relative_coordinate(fluorapatite_lattice_p, I1, I2) ≈ - relative_coordinate(fluorapatite_lattice_p, I2, I1)
-    @test relative_coordinate(fluorapatite_lattice_p, I1t, I2t) ≈ fbasis*SVector(1,1,5) + fcell[5,2] - fcell[2,1]
+    @test relative_coordinate(fluorapatite_lattice_p, I1t, I2t) ≈ fpvecs*SVector(1,1,5) + fcell[5,2] - fcell[2,1]
     @test relative_coordinate(fluorapatite_lattice_p, I1t, I2t) ≈ - relative_coordinate(fluorapatite_lattice_p, I2t, I1t)
 	@test num_of_groups(fluorapatite_lattice_p) == 2
 	@test group_size(fluorapatite_lattice_p, 1) == 11^3*2

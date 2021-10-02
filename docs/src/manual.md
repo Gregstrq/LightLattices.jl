@@ -8,7 +8,7 @@ abstract type AbstractNodeCollection{D,T} end
 ```
 This type describes an arbitrary collection of nodes in `D`-dimensional space. The coordinates of the nodes are stored internally as instances of `SVector{D,T}`. Hence, parameter `T` describes the type used to store the coordinates.
 
-All the unit-cell types are subtypes of abstract type `AbstractCell`.
+All the basis-cell types are subtypes of abstract type `AbstractCell`.
 ```julia
 abstract type AbstractCell{D,T} <: AbstractNodeCollection{D,T} end
 ```
@@ -25,17 +25,17 @@ At this point there is only one subtype of `AbstractLattice`, which is `RegularL
 
 The general constructor for a regular (without disorder) lattice looks like this:
 ```julia
-RegularLattice(lattice_dims::NTuple{D,Int}[, basis::SMatrix{D,D,T}, unit_cell::AbstractCell{D,T1}]; periodic = true, label::Union{Symbol,Nothing}=nothing).
+RegularLattice(lattice_dims::NTuple{D,Int}[, primitive_vecs::SMatrix{D,D,T}, basis_cell::AbstractCell{D,T1}]; periodic = true, label::Union{Symbol,Nothing}=nothing).
 ```
-General lattice consists of a unit cell which is translated in space by the vectors of the Bravais Lattice. Thus, the meaning of the entries is the following:
-- `lattice_dims` is the tuple specifying the size of the lattice along each of the basis directions.
-- `basis` is the matrix, which columns are the basis vectors of the underlying Bravais lattice.
-- `unit_cell` specifies the collection of nodes which is used as the unit cell of the lattice.
+General lattice consists of a basis cell which is translated in space by the primitive vectors of the Bravais Lattice. Thus, the meaning of the entries is the following:
+- `lattice_dims` is the tuple specifying the size of the lattice along each of the primitive vectors.
+- `primitive_vecs` is the matrix, which columns are the primitive vectors of the underlying Bravais lattice.
+- `basis_cell` specifies the collection of nodes which is used as the basis cell of the lattice.
 - `periodic` specifies the boundary conditions: `true` for periodic, `false` for free boundary conditions.
 - `label` is either `nothing` or a `Symbol`; it is a label to refer to the lattice (may be useful to automatically generate the name for the computation which uses particular lattice).
 
 !!! note
-    The variables `basis` and `unit_cell` can use different internal types to store coordinates.
+    The variables `primitive_vecs` and `basis_cell` can use different internal types to store coordinates.
     However, when the lattice is constructed, they are promoted to the single type.
     
     !!! warning
@@ -45,15 +45,15 @@ General lattice consists of a unit cell which is translated in space by the vect
 
 ### Convenient constructors
 
-If the variable `unit_cell` is omitted, it is assumed that unit cell is trivial, i.e. consisting of a single node.
-If `basis` is omitted as well, hypercubic lattice is constructed. Instead of basis, one can specify the lattice spacing in this case:
+If the variable `basis_cell` is omitted, it is assumed that basis cell is trivial, i.e. consisting of a single node.
+If `primitive_vecs` is omitted as well, hypercubic lattice is constructed. Instead of basis, one can specify the lattice spacing in this case:
 ```julia
 RegularLattice(lattice_dims::NTuple{D,Int}[, a::Number = 1]; label = :cubic, periodic = true)
 ```
 
 ## Unit Cells and Indexing
 
-There are three types of unit cells: `HomogeneousCell`, `TrivialCell`, `InhomogeneousCell`.
+There are three types of basis cells: `HomogeneousCell`, `TrivialCell`, `InhomogeneousCell`.
 
 ### `HomogeneousCell`
 This type is used when there is no distinction between the nodes of the cell. The general constructor looks like
@@ -69,7 +69,7 @@ cell[i]
 
 ### `TrivialCell`
 
- `TrivialCell` is used by default when no unit cell is specified. It corresponds to a unit cell with single node.
+ `TrivialCell` is used by default when no basis cell is specified. It corresponds to a basis cell with single node.
 
 For consistency of interface, `TrivialCell` behaves like a `HomogeneousCell` with single node, which has zero coordinates.
 One can even index into it:
@@ -81,7 +81,7 @@ getindex(::TrivialCell{D,T}, 1) = zero(SVector{D,T})
 
 This type is useful if one needs to distinguish between the several groups of nodes.
 
-For example, one can consider a crystal consisting of several types of nuclei, let's say, "A" and "B". Then, if one needs to get the coordinate of the ``i``-th nuclei of type "B" inside the unit cell, one calls
+For example, one can consider a crystal consisting of several types of nuclei, let's say, "A" and "B". Then, if one needs to get the coordinate of the ``i``-th nuclei of type "B" inside the basis cell, one calls
 ```julia
 cell[i, 2]
 ```
@@ -125,7 +125,7 @@ lattice[I::CartesianIndex{D}, ic::Int]
 lattice[I::CartesianIndex{D}, ic::Int, ig::Int]
 ```
 !!! note
-	One can always index into lattice as if it has a `HomogeneousCell` unit cell, i.e., using the default style for lattices with `HomogeneousCell` unit cell.
+	One can always index into lattice as if it has a `HomogeneousCell` basis cell, i.e., using the default style for lattices with `HomogeneousCell` basis cell.
 
 ### Alternative style
 
@@ -143,7 +143,7 @@ lattice[x::Int, y::Int, z::Int, ic::Int]
 lattice[x::Int, y::Int, z::Int, ic::Int, ig::Int]
 ```
 !!! note
-	With alternative indexing, one can again use the style for lattices with `HomogeneousCell` unit cell for lattices with other types of unit cell. 
+	With alternative indexing, one can again use the style for lattices with `HomogeneousCell` basis cell for lattices with other types of basis cell. 
 
 ### Boundary conditions
 
@@ -166,7 +166,7 @@ The package exports the function
 relative_coordinate(collection::AbstractNodeCollection, I1, I2)
 ```
 which returns the coordinate of node `I1` relative to node `I2`.
-The format of the indices `I1` and `I2` depends on particular type of the collection (they should correspond to the default style of index). You can find default style of indexing for unit cells in [Unit Cells and Indexing](@ref) section. The default styles for lattices are listed in subsection [Default style](@ref)
+The format of the indices `I1` and `I2` depends on particular type of the collection (they should correspond to the default style of index). You can find default style of indexing for basis cells in [Unit Cells and Indexing](@ref) section. The default styles for lattices are listed in subsection [Default style](@ref)
 
 
 !!! note
@@ -203,7 +203,7 @@ The idea is quite simple: both `Ic1` and `Ic2` are translated by the same amount
 
 The package provides `eachindex` implementation for all exported cell and lattice types.
 For cells, the iteration order is as follows: first nodes inside a group, then the groups themselves (if there are any groups).
-For lattices, the iteration over the unit cell indices is preceded by th iteration over lattice indices.
+For lattices, the iteration over the basis cell indices is preceded by th iteration over lattice indices.
 
 In addition, to that, the package provides a function to compare the indices:
 ```julia

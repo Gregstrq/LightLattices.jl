@@ -17,13 +17,13 @@ struct RegularLattice{D, T, PB, CT, L<:Union{Symbol,Nothing}} <: AbstractLattice
     """
     lattice_dims::NTuple{D, Int}
     """
-    Coordinates of the basis vectors of the underlying Bravais lattice. `basis[:, i]` gives the ``i``-th basis vector.
+    Coordinates of the primitive vectors of the underlying Bravais lattice. `primitive_vecs[:, i]` gives the ``i``-th primitive vector.
     """
-    basis::SMatrix{D,D, T}
+    primitive_vecs::SMatrix{D,D, T}
     """
-    Unit cell of the lattice.
+    Repeated basis cell of the lattice.
     """
-    unit_cell::CT
+    basis_cell::CT
     """
     Label of the Lattice.
     """
@@ -43,28 +43,28 @@ struct RegularLattice{D, T, PB, CT, L<:Union{Symbol,Nothing}} <: AbstractLattice
     """    
     $(SIGNATURES)
 
-    Constructs a Regular Lattice enforcing the condition that `typeof(unit_cell)<:AbstractCell{D,T}`.
+    Constructs a Regular Lattice enforcing the condition that `typeof(basis_cell)<:AbstractCell{D,T}`.
 
     #Arguments
-    - `lattice_dims::NTuple{D,Int}`: specifies the number of unit cells along each of the basis directions.
-    - `basis::SMatrix{D,D,T}`: stores as columns the basis vectors of the underlying Bravais lattice.
-    - `unit_cell::AbstractCell{D,T}`: specifies the unit cell of the lattice; if the unit cell does not have any special structure, an instance of `TrivialCell` should be used.
+    - `lattice_dims::NTuple{D,Int}`: specifies the number of basis cells along each of the basis directions.
+    - `primitive_vecs::SMatrix{D,D,T}`: stores as columns the primitive vectors of the underlying Bravais lattice.
+    - `basis_cell::AbstractCell{D,T}`: specifies the repeated basis cell of the lattice; if the basis cell does not have any special structure, an instance of `TrivialCell` should be used.
     - `label::Union{Symbol,Nothing}`: the label of the lattice.
     - `PB::Bool`: specifies if periodic or free boundary conditions are applied; default value is `true`.
     """
-    function RegularLattice(lattice_dims::NTuple{D, Int}, basis::SMatrix{D,D,T}, unit_cell::AbstractCell{D,T}, label::Union{Symbol,Nothing}, PB::Bool) where {D,T}
+	function RegularLattice(lattice_dims::NTuple{D, Int}, primitive_vecs::SMatrix{D,D,T}, basis_cell::AbstractCell{D,T}, label::Union{Symbol,Nothing}, PB::Bool) where {D,T}
         @assert D>=1
         num_of_cells = prod(lattice_dims)
         central_cell = CartesianIndex(div.(lattice_dims,2).+1)
-        new{D, T, PB, typeof(unit_cell), typeof(label)}(lattice_dims, basis, unit_cell, label, num_of_cells, length(unit_cell)*num_of_cells, central_cell)
+        new{D, T, PB, typeof(basis_cell), typeof(label)}(lattice_dims, primitive_vecs, basis_cell, label, num_of_cells, length(basis_cell)*num_of_cells, central_cell)
     end
 end
 
 ### Outer constructors.
 
-function RegularLattice(lattice_dims::NTuple{D, Int}, basis::SMatrix{D,D,T1}, unit_cell::AbstractCell{D,T2}, label, PB) where {D,T1,T2}
+function RegularLattice(lattice_dims::NTuple{D, Int}, primitive_vecs::SMatrix{D,D,T1}, basis_cell::AbstractCell{D,T2}, label, PB) where {D,T1,T2}
     T = promote_type(T1,T2)
-    return RegularLattice(lattice_dims, SMatrix{D,D,T}(basis), switch_coord_type(unit_cell, T), label, PB)
+    return RegularLattice(lattice_dims, SMatrix{D,D,T}(primitive_vecs), switch_coord_type(basis_cell, T), label, PB)
 end
 
 """
@@ -73,30 +73,30 @@ end
 Constructs hypercubic lattice with lattice parameter `a` and trivial unit cell.
 """
 function RegularLattice(lattice_dims::NTuple{D, Int}, a::T=1; periodic=true, label=:cubic) where {D, T<:Number}
-    basis = one(SMatrix{D,D,Int})*a
-    unit_cell = TrivialCell{D,T}()
-    return RegularLattice(lattice_dims, basis, unit_cell, label, periodic)
+    primitive_vecs = one(SMatrix{D,D,Int})*a
+    basis_cell = TrivialCell{D,T}()
+    return RegularLattice(lattice_dims, primitive_vecs, basis_cell, label, periodic)
 end
-function RegularLattice(lattice_dims::NTuple{D,Int}, basis::SMatrix{D,D,T}; label=:simple, periodic = true) where {D,T}
-    unit_cell = TrivialCell{D,T}()
-    return RegularLattice(lattice_dims, basis, unit_cell, label, periodic)
+function RegularLattice(lattice_dims::NTuple{D,Int}, primitive_vecs::SMatrix{D,D,T}; label=:simple, periodic = true) where {D,T}
+    basis_cell = TrivialCell{D,T}()
+    return RegularLattice(lattice_dims, primitive_vecs, basis_cell, label, periodic)
 end
 """
-`RegularLattice(lattice_dims::NTuple{D, Int}, basis::SMatrix{D,D}, unit_cell::AbstractCell{D}; label=nothing, periodic=true)`
+`RegularLattice(lattice_dims::NTuple{D, Int}, primitive_vecs::SMatrix{D,D}, basis_cell::AbstractCell{D}; label=nothing, periodic=true)`
 
 Convenient constructor which allows to specify the label and boundary condition as keyword arguments.
 """
-RegularLattice(lattice_dims::NTuple{D, Int}, basis::SMatrix{D,D}, unit_cell::AbstractCell{D}; label=nothing, periodic=true) where {D} =
-    RegularLattice(lattice_dims, basis, unit_cell, label, periodic)
+RegularLattice(lattice_dims::NTuple{D, Int}, primitive_vecs::SMatrix{D,D}, basis_cell::AbstractCell{D}; label=nothing, periodic=true) where {D} =
+    RegularLattice(lattice_dims, primitive_vecs, basis_cell, label, periodic)
 
 """
 $(TYPEDSIGNATURES)
 
 Return the number of lattice separate groups.
 """
-@inline num_of_groups(lattice::RegularLattice) = num_of_groups(lattice.unit_cell)
+@inline num_of_groups(lattice::RegularLattice) = num_of_groups(lattice.basis_cell)
 
-Base.@propagate_inbounds group_size(lattice::RegularLattice, ig) = lattice.num_of_cells*group_size(lattice.unit_cell, ig)
+Base.@propagate_inbounds group_size(lattice::RegularLattice, ig) = lattice.num_of_cells*group_size(lattice.basis_cell, ig)
 
 Base.length(lattice::RegularLattice) = lattice.num_of_nodes
 
@@ -117,19 +117,19 @@ In the case of periodic lattice, if `CartesianIndex` is outside of the lattice d
 
 Base.@propagate_inbounds function Base.getindex(lattice::RegularLattice{D,T}, I::CartesianIndex{D}, Ic...) where {D,T}
     @boundscheck check_lattice_index(lattice, I)
-	@boundscheck check_cell_index(lattice.unit_cell, Ic...)
-    @inbounds lattice.basis*SVector{D}(I.I) + lattice.unit_cell[Ic...]
+	@boundscheck check_cell_index(lattice.basis_cell, Ic...)
+    @inbounds lattice.primitive_vecs*SVector{D}(I.I) + lattice.basis_cell[Ic...]
 end
 Base.@propagate_inbounds function Base.getindex(lattice::RegularLattice{D,T,false,<:TrivialCell}, I::CartesianIndex{D}) where {D,T}
     @boundscheck check_lattice_index(lattice, I)
-    @inbounds lattice.basis*SVector{D}(I.I)
+    @inbounds lattice.primitive_vecs*SVector{D}(I.I)
 end
 Base.@propagate_inbounds function Base.getindex(lattice::RegularLattice{D,T,true}, I::CartesianIndex{D}, Ic...) where {D,T}
-    @boundscheck check_cell_index(lattice.unit_cell, Ic...)
-    @inbounds lattice.basis*SVector{D}(mod1.(I.I, lattice.lattice_dims)) + lattice.unit_cell[Ic...]
+    @boundscheck check_cell_index(lattice.basis_cell, Ic...)
+    @inbounds lattice.primitive_vecs*SVector{D}(mod1.(I.I, lattice.lattice_dims)) + lattice.basis_cell[Ic...]
 end
 Base.@propagate_inbounds function Base.getindex(lattice::RegularLattice{D,T,true,<:TrivialCell}, I::CartesianIndex{D}) where {D,T}
-    @inbounds lattice.basis*SVector{D}(mod1.(I.I, lattice.lattice_dims))
+    @inbounds lattice.primitive_vecs*SVector{D}(mod1.(I.I, lattice.lattice_dims))
 end
 
 
