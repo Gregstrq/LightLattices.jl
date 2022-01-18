@@ -25,4 +25,4 @@ Returns `true` if the index `i1` occurs before `i2` while iterating over a node 
 ### Iteration utils
 
 Base.eachindex(cell::AbstractCell) = cell |> length |> Base.OneTo
-Base.eachindex(lattice::RegularLattice) = Iterators.product(CartesianIndices(lattice.dims), eachindex(lattice.unit_cell))
+Base.eachindex(lattice::RegularLattice) = Iterators.product(CartesianIndices(lattice.lattice_dims), eachindex(lattice.basis_cell))
