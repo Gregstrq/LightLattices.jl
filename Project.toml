@@ -9,7 +9,7 @@ RecursiveArrayTools = "731186ca-8d62-57ce-b412-fbd966d074cd"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 
 [compat]
-DocStringExtensions = "^0.8.3"
+DocStringExtensions = "^0.8.3, 0.9"
 RecursiveArrayTools = "^2.2.0"
 StaticArrays = "^0.12.5, ^1.0.1"
 julia = "1, ^1.5.2"
