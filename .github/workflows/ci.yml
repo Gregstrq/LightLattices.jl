@@ -18,20 +18,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        downgrade_mode: ["deps"]
         version: ["lts", "1", "pre", "nightly"]
         os: [ubuntu-latest, macOS-latest, windows-latest]
         arch: ["default"]
-        show-versioninfo: [false]
+        show-versioninfo: [true]
     steps:
       - uses: actions/checkout@v4
       - uses: julia-actions/setup-julia@v2
         with:
           version: ${{ matrix.version }}
           arch: ${{ matrix.arch }}
-      - uses: julia-actions/julia-downgrade-compat@v2
-        with:
-          mode: ${{ matrix.downgrade_mode }}
       - uses: julia-actions/cache@v2
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@v1
