@@ -1,4 +1,4 @@
-using Unitful, StaticArrays, RecursiveArrayTools, LightLattices, Test
+using Unitful, StaticArrays, LightLattices, Test
 
 ###############################################################
 #
@@ -47,20 +47,20 @@ fpvecs = hcat(af*[0.5, 0.5*sqrt(3), 0.0],
 cell_vectors_raw1 = [[0.0, 0.0, 0.25], [0.0, 0.0, 0.75]]
 cell_vectors_raw2 = [[x, y, 0.25], [-y, x-y, 0.25], [y-x, -x, 0.25],
                   [-x, -y, 0.75], [y, y-x, 0.75], [x-y, x, 0.75]]
-fcell_vectors = ArrayPartition([fpvecs*vec for vec in cell_vectors_raw1], [fpvecs*vec for vec in cell_vectors_raw2])
+fcell_vectors = ([fpvecs*vec for vec in cell_vectors_raw1], [fpvecs*vec for vec in cell_vectors_raw2])
 fcell = InhomogeneousCell([fpvecs*vec for vec in cell_vectors_raw1], [fpvecs*vec for vec in cell_vectors_raw2]; label = :fluorapatite_magnetic)
 @testset "Inhomogeneous unit cell for magnetic sublattice of fluorapatite" begin
     @test_throws BoundsError fcell[9]
     @test_throws BoundsError fcell[3,1]
     @test_throws BoundsError fcell[7, 2]
-    @test fcell[2] == fcell_vectors[2]
-    @test fcell[2, 1] == fcell_vectors[2]
-    @test fcell[3] == fcell_vectors[2,1]
-    @test fcell[1,2] == fcell_vectors[2,1]
-    @test relative_coordinate(fcell, 5, 2) == fcell_vectors[2,3] - fcell_vectors[1,2]
-    @test relative_coordinate(fcell, (3,2), 2) == fcell_vectors[2,3] - fcell_vectors[1,2]
-    @test relative_coordinate(fcell, 5, (2,1)) == fcell_vectors[2,3] - fcell_vectors[1,2]
-    @test relative_coordinate(fcell, (3,2), (2,1)) == fcell_vectors[2,3] - fcell_vectors[1,2]
+    @test fcell[2] == fcell_vectors[1][2]
+    @test fcell[2, 1] == fcell_vectors[1][2]
+    @test fcell[3] == fcell_vectors[2][1]
+    @test fcell[1,2] == fcell_vectors[2][1]
+    @test relative_coordinate(fcell, 5, 2) == fcell_vectors[2][3] - fcell_vectors[1][2]
+    @test relative_coordinate(fcell, (3,2), 2) == fcell_vectors[2][3] - fcell_vectors[1][2]
+    @test relative_coordinate(fcell, 5, (2,1)) == fcell_vectors[2][3] - fcell_vectors[1][2]
+    @test relative_coordinate(fcell, (3,2), (2,1)) == fcell_vectors[2][3] - fcell_vectors[1][2]
 	@test num_of_groups(fcell) == 2
 	@test group_size(fcell, 1) == 2
 	@test group_size(fcell, 2) == 6
