@@ -1,6 +1,6 @@
 # LightLattices.jl
 
-The package provides a convenient interface to work with Lattices with arbitrary unit cells.
+The package provides a convenient interface to work with Lattices with arbitrary basis cells.
 
 ## Manual
 
