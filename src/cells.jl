@@ -94,6 +94,13 @@ Trivial cell consisting of one node at the origin of `D`-dimensional coordinate 
 struct TrivialCell{D, T} <: AbstractCell{D, T} end
 
 ###
+### Homogeneity trait 
+
+
+is_homogeneous(cell::Union{TrivialCell,HomogeneousCell}) = IsHomogeneous(true)
+is_homogeneous(cell::InhomogeneousCell) = IsHomogeneous(false)
+
+###
 ### length for AbstractCell
 
 """
@@ -115,16 +122,28 @@ Return the number of separate groups in a cell.
 @inline num_of_groups(cell::Union{TrivialCell, HomogeneousCell}) = 1
 @inline num_of_groups(cell::InhomogeneousCell{D,T,N}) where {D,T,N} = N
 
+@inline check_groupbounds(collection::AbstractCollection, ig::Int) = check_group_index(collection, ig) || throw(ErrorException("Group index $(ig) is out of range for collection $(collection)"))
+@inline check_group_index(collection::AbstractCollection, ig::Int) = check_group_index(is_homogeneous(collection), collection, ig)
+@inline check_group_index(::IsHomogeneous{true}, collection::AbstractCollection, ig::Int) = (ig==1)
+@inline check_group_index(::IsHomogeneous{false}, collection::AbstractCollection, ig::Int) = (1≤ig≤num_of_groups(collection))
+
 """
 $(TYPEDSIGNATURES)
 
 Returns the size of the `ig`-th homogeneous group inside a cell.
 """
-Base.@propagate_inbounds group_size(cell::Union{TrivialCell, HomogeneousCell}, ig::Int) = (@boundscheck ig==1 || throw(ErrorException("Group index is out of range.")); length(cell))
-Base.@propagate_inbounds group_size(cell::InhomogeneousCell, ig::Int) = (@boundscheck 1<=ig<=num_of_groups(cell) || throw(ErrorException("Group index is out of range."));cell.group_sizes[ig])
+Base.@propagate_inbounds group_size(cell::Union{TrivialCell, HomogeneousCell}, ig::Int) = (@boundscheck check_groupbounds(cell, ig); length(cell))
+Base.@propagate_inbounds group_size(cell::InhomogeneousCell, ig::Int) = (@boundscheck check_groupbounds(cell, ig); cell.group_sizes[ig])
 
 ###
 ### Indexing
+
+@inline Base.checkbounds(collection::AbstractCollection, I...) = checkindex(collection, I...) || throw(BoundsError(collection, I...))
+
+@inline Base.checkindex(cell::TrivialCell, i::Int) = i==1
+@inline Base.checkindex(cell::Union{HomogeneousCell,InhomogeneousCell}, ic::Int) = (1<=ic<=length(cell))
+@inline Base.checkindex(cell::InhomogeneousCell, ic::Int, ig::Int) =
+check_group_index(cell, ig) && (1<=ic<=group_size(cell, ig))
 
 """
 `getindex(cell::AbstractCell, i...)`
@@ -132,20 +151,16 @@ Base.@propagate_inbounds group_size(cell::InhomogeneousCell, ig::Int) = (@bounds
 Returns the coordinate of the ``i``-th node of the cell. In the case of InhomogeneousCell we can use double index `i = i1, i2` to access ``i_1``-th node of ``i_2``-th group.
 """
 Base.@propagate_inbounds function Base.getindex(cell::Union{HomogeneousCell, InhomogeneousCell}, ic::Int)
-	@boundscheck check_cell_index(cell, ic)
+	@boundscheck checkbounds(cell, ic)
 	@inbounds getindex(cell.cell_vectors, ic)
 end
 Base.@propagate_inbounds function Base.getindex(cell::InhomogeneousCell, ic::Int, ig::Int)
-	@boundscheck check_cell_index(cell, ic, ig)
+	@boundscheck checkbounds(cell, ic, ig)
 	@inbounds getindex(cell.cell_vectors, ig, ic)
 end
 Base.@propagate_inbounds Base.getindex(cell::TrivialCell{D,T}, i::Int) where {D,T} = (@boundscheck check_cell_index(cell, i); zero(SVector{D,T}))
 
 
-@inline check_cell_index(cell::TrivialCell, i::Int) = i==1 || throw(BoundsError(cell, i))
-@inline check_cell_index(cell::Union{HomogeneousCell,InhomogeneousCell}, ic::Int) = (1<=ic<=length(cell)) || throw(BoundsError(cell, ic))
-@inline check_cell_index(cell::InhomogeneousCell, ic::Int, ig::Int) =
-    (1<=ig<=num_of_groups(cell)) && (1<=ic<=group_size(cell, ig)) || throw(BoundsError(cell, (ic, ig)))
 
 ###
 ### Conversion utilities

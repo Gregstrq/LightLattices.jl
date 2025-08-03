@@ -116,24 +116,29 @@ In the case of periodic lattice, if `CartesianIndex` is outside of the lattice d
 """
 
 Base.@propagate_inbounds function Base.getindex(lattice::RegularLattice{D,T}, I::CartesianIndex{D}, Ic...) where {D,T}
-    @boundscheck check_lattice_index(lattice, I)
-	@boundscheck check_cell_index(lattice.basis_cell, Ic...)
+    @boundscheck check_lattice_bounds(lattice, I)
+	@boundscheck checkbounds(lattice.basis_cell, Ic...)
     @inbounds lattice.primitive_vecs*SVector{D}(I.I) + lattice.basis_cell[Ic...]
 end
 Base.@propagate_inbounds function Base.getindex(lattice::RegularLattice{D,T,false,<:TrivialCell}, I::CartesianIndex{D}) where {D,T}
-    @boundscheck check_lattice_index(lattice, I)
+    @boundscheck check_lattice_bounds(lattice, I)
     @inbounds lattice.primitive_vecs*SVector{D}(I.I)
 end
 Base.@propagate_inbounds function Base.getindex(lattice::RegularLattice{D,T,true}, I::CartesianIndex{D}, Ic...) where {D,T}
-    @boundscheck check_cell_index(lattice.basis_cell, Ic...)
+    @boundscheck checkbounds(lattice.basis_cell, Ic...)
     @inbounds lattice.primitive_vecs*SVector{D}(mod1.(I.I, lattice.lattice_dims)) + lattice.basis_cell[Ic...]
 end
 Base.@propagate_inbounds function Base.getindex(lattice::RegularLattice{D,T,true,<:TrivialCell}, I::CartesianIndex{D}) where {D,T}
     @inbounds lattice.primitive_vecs*SVector{D}(mod1.(I.I, lattice.lattice_dims))
 end
 
+@inline Base.checkindex(lattice::RegularLattice{D,T}, I::CartesianIndex{D}, Ic...) where {D,T} = check_lattice_index(lattice, I) && checkindex(lattice.basis_cell, Ic...)
+@inline Base.checkindex(lattice::RegularLattice{D,T,false,<:TrivialCell}, I::CartesianIndex{D}) where {D,T} = check_lattice_index(lattice, I)
+@inline Base.checkindex(lattice::RegularLattice{D,T,true}, I::CartesianIndex{D}, Ic...) where {D,T} = checkindex(lattice.basis_cell)
+@inline Base.checkindex(lattice::RegularLattice{D,T,true}, I::CartesianIndex{D}) where {D,T} = true
 
-@inline check_lattice_index(lattice::RegularLattice{D}, I::CartesianIndex{D}) where {D} = _check_cartesian_index(true, I.I, lattice.lattice_dims) || throw(BoundsError(lattice, I))
+@inline check_lattice_bounds(lattice::RegularLattice{D}, I::CartesianIndex{D}) where {D} = check_lattice_index(lattice, I) || throw(BoundsError(lattice, I))
+@inline check_lattice_index(lattice::RegularLattice{D}, I::CartesianIndex{D}) where {D} = _check_cartesian_index(true, I.I, lattice.lattice_dims)
 @inline _check_cartesian_index(b, i, stop) = _check_cartesian_index(b & (1 <= i[1] <= stop[1]), Base.tail(i), Base.tail(stop))
 @inline _check_cartesian_index(b, i::Tuple, ::Tuple{}) = false
 @inline _check_cartesian_index(b, i::Tuple{}, stop::Tuple) = false
@@ -162,6 +167,10 @@ end
 Base.@propagate_inbounds function relative_coordinate(lattice::RegularLattice{D,T,true}, I1::TI, I2::TI) where {D,T, TI<:Tuple{CartesianIndex{D},Vararg{Int}}}
     return lattice[first(I1) + lattice.central_cell - first(I2), Base.tail(I1)...] - lattice[lattice.central_cell, Base.tail(I2)...]
 end
+
+## Homogeneity trait
+
+is_homogeneous(lattice::RegularLattice) = is_homogeneous(lattice.cell)
 
 #Base.@propagate_inbounds function translate_indices(lattice::RegularLattice{D,T,PB,<:TrivialCell}, Is) where {D,T,PB}
 #    @boundscheck map(x -> check_lattice_index(lattice, x), Is)

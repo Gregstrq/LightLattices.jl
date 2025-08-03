@@ -26,3 +26,13 @@ Returns `true` if the index `i1` occurs before `i2` while iterating over a node 
 
 Base.eachindex(cell::AbstractCell) = cell |> length |> Base.OneTo
 Base.eachindex(lattice::RegularLattice) = Iterators.product(CartesianIndices(lattice.lattice_dims), eachindex(lattice.basis_cell))
+
+
+Base.@propagate_inbounds function group_iterator(::IsHomogeneous{false}, cell::AbstractCell, ig::Int)
+    @boundscheck check_groupbounds(cell, ig) 
+    return Base.OneTo(@inbounds group_size(cell, ig))
+end
+Base.@propagate_inbounds function group_iterator(::IsHomogeneous{false}, lattice::RegularLattice, ig::Int)
+    @boundscheck check_groupbounds(lattice, ig)
+    return Iterators.product(CartesianIndices(lattice.lattice_dims), Base.OneTo(@inbounds group_size(lattice.basis_cell, ig)))
+end

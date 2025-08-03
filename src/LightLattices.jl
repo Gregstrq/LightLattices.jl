@@ -11,6 +11,14 @@ Abstract collection of nodes in `D`-dimensional space. Type `T` is used to repre
 """
 abstract type AbstractNodeCollection{D, T} end
 
+"""
+$(TYPEDEF)
+
+Abstract collection of nodes in `D`-dimensional space, occupied by the physical objects of types `ET`. The type `T` is used to represent coordinates.
+"""
+abstract type AbstractPhysicalCollection{D, T, ET} end
+
+const AbstractCollection = Union{AbstractNodeCollection, AbstractPhysicalCollection}
 
 """
 $(TYPEDSIGNATURES)
@@ -19,15 +27,34 @@ Returns the coordinate of node with index `i1` relative to coordinate of the nod
 """
 Base.@propagate_inbounds function relative_coordinate(collection::AbstractNodeCollection, i1, i2) end
 
+"""
+$(TYPEDEF)
+
+The trait which characterizes the homogeneity of the collection.
+"""
+
+"""
+$(TYPEDEF)
+
+Trait to distinguish homogeneous and inhomogeneous systems.
+"""
+struct IsHomogeneous{BT} end
+
 include("cells.jl")
 include("lattices.jl")
 include("utils.jl")
+include("disordered_lattices.jl")
+include("composite_collection.jl")
+include("physical_collection.jl")
+
 
 export AbstractNodeCollection
 export AbstractCell, TrivialCell, HomogeneousCell, InhomogeneousCell
 export AbstractLattice, RegularLattice
+export DisorderedLattice, CompositeCollection
 export switch_coord_type
 export relative_coordinate
 export num_of_groups, group_size
+export IsHomogeneous, is_homogeneous, group_iterator
 
 end
