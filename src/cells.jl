@@ -96,8 +96,8 @@ struct TrivialCell{D, T} <: AbstractCell{D, T} end
 ### Homogeneity trait 
 
 
-is_homogeneous(cell::Union{TrivialCell,HomogeneousCell}) = IsHomogeneous(true)
-is_homogeneous(cell::InhomogeneousCell) = IsHomogeneous(false)
+is_homogeneous(cell::Union{TrivialCell,HomogeneousCell}) = IsHomogeneous{true}()
+is_homogeneous(cell::InhomogeneousCell) = IsHomogeneous{false}()
 
 ###
 ### length for AbstractCell
