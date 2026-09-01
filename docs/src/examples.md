@@ -41,7 +41,7 @@ Here, `HomogeneousCell` constructor takes the vector of coordinates of the nodes
 Coordinates can be expressed as `Vector`-s, `SVector`-s or `NTuple`-s. Under the hood, all coordinates are converted to `SVector`-s.
 
 ## Magnetic sublattice of fluorapatite with inhomogeneous basis cell.
-This example is going to be quite elaborated, but it illustrates the application of additional type of unit cell: `InhomogeneousCell`.
+This example is going to be quite elaborated, but it illustrates the application of additional type of basis cell: `InhomogeneousCell`.
 Fluorapatite has the hexagonal structure with the space group ``P6_3/m``. The three lattice parameters are ``a=b=9.462\mathring A`` and ``c=6.849\mathring A``.
 The ``\bf{c}``-axis is orthogonal to ``(\bf{a}, \bf{b})`` plane and the angle between ``\bf{a}`` and ``\bf{b}`` is ``120^\circ``.
 Thus, we can construct the matrix of primitive vectors as

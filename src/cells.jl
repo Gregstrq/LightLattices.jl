@@ -46,11 +46,11 @@ $(TYPEDFIELDS)
 
 Unordered inhomogeneous collection of nodes in `D`-dimensional space. This type allows one to partition the nodes of the cell into several groups. Different groups of nodes may correspond to the different classes of physical objects occupying these nodes.
 """
-struct InhomogeneousCell{D, T, N, L<:Union{Symbol,Nothing}, T′} <: AbstractCell{D, T}
+struct InhomogeneousCell{D, T, N, L<:Union{Symbol,Nothing}} <: AbstractCell{D, T}
     """
     Coordinates of nodes.
     """
-    cell_vectors::ArrayPartition{T′, NTuple{N, Vector{SVector{D, T}}}}
+    cell_vectors::NTuple{N, Vector{SVector{D, T}}}
     """
     Sizes of the homogeneous groups inside inhomogeneous cell.
     """
@@ -59,21 +59,20 @@ struct InhomogeneousCell{D, T, N, L<:Union{Symbol,Nothing}, T′} <: AbstractCel
     Label of the cell.
     """
     label::L
-    InhomogeneousCell(cell_vectors::ArrayPartition{T′, NTuple{N, Vector{SVector{D, T}}}}, label::L) where {T′,T,N,D, L<:Union{Symbol,Nothing}} = new{D,T,N,L,T′}(cell_vectors, Tuple(length.(cell_vectors.x)), label)
+    InhomogeneousCell(cell_vectors::NTuple{N, Vector{SVector{D, T}}}, label::L) where {T,N,D, L<:Union{Symbol,Nothing}} = new{D,T,N,L}(cell_vectors, length.(cell_vectors), label)
 end
 
 ### InhomogeneousCell constructors
 
 @inline InhomogeneousCell(cell_vectors; label = nothing) = InhomogeneousCell(cell_vectors, label)
-function InhomogeneousCell(cell_vectors::ArrayPartition{T′, NTuple{N, Vector{NTuple{D,T}}}}; label::Union{Symbol,Nothing} = nothing) where {T′,T,N,D}
-    new_cell_vectors = similar(cell_vectors, SVector{D,T})
-    new_cell_vectors .= cell_vectors
-    return InhomogeneousCell(cell_vectors, label)
+function InhomogeneousCell(cell_vectors::NTuple{N, Vector{NTuple{D,T}}}; label::Union{Symbol,Nothing} = nothing) where {T,N,D}
+    new_cell_vectors = map(x->map(y->SVector{D,T}(y), x), cell_vectors)
+    return InhomogeneousCell(new_cell_vectors, label)
 end
 function InhomogeneousCell(vecss::Tuple{Vector, Vector, Vararg{Vector}}, label::Union{Symbol,Nothing})
     T = promote_type(map(x -> promote_type(compute_type.(x)...), vecss)...)
     D = length(vecss |> first |> first)
-    cell_vectors = ArrayPartition(map(x -> SVector{D,T}.(x), vecss))
+    cell_vectors = map(x->map(y->SVector{D,T}(y), x), vecss)
     return InhomogeneousCell(cell_vectors, label)
 end
 @inline InhomogeneousCell(cell_vectors1::Vector, cell_vectors2::Vector, vecss...; label::Union{Symbol,Nothing} = nothing) = InhomogeneousCell((cell_vectors1, cell_vectors2, vecss...), label)
@@ -110,6 +109,7 @@ Returns the number of the nodes in the cell.
 """
 @inline Base.length(cell::AbstractCell) = length(cell.cell_vectors)
 @inline Base.length(cell::TrivialCell) = 1
+@inline Base.length(cell::InhomogeneousCell) = sum(cell.group_sizes)
 
 ###
 ### Helper functions to work with cell groups
@@ -138,25 +138,36 @@ Base.@propagate_inbounds group_size(cell::InhomogeneousCell, ig::Int) = (@bounds
 ###
 ### Indexing
 
-@inline Base.checkbounds(collection::AbstractCollection, I...) = checkindex(collection, I...) || throw(BoundsError(collection, I...))
+@inline Base.checkbounds(collection::AbstractCollection, I...) = checkindex(collection, I...)
+@inline Base.checkindex(collection::AbstractCell, I...) = check_cell_index(collection, I...)
 
-@inline Base.checkindex(cell::TrivialCell, i::Int) = i==1
-@inline Base.checkindex(cell::Union{HomogeneousCell,InhomogeneousCell}, ic::Int) = (1<=ic<=length(cell))
-@inline Base.checkindex(cell::InhomogeneousCell, ic::Int, ig::Int) =
-check_group_index(cell, ig) && (1<=ic<=group_size(cell, ig))
+@inline check_cell_index(cell::TrivialCell, i::Int) = i==1 || throw(BoundsError(cell, i))
+@inline check_cell_index(cell::Union{HomogeneousCell,InhomogeneousCell}, ic::Int) = (1<=ic<=length(cell)) || throw(BoundsError(cell, ic))
+@inline check_cell_index(cell::InhomogeneousCell, ic::Int, ig::Int) =
+    check_group_index(cell, ig) && (1<=ic<=group_size(cell, ig)) || throw(BoundsError(cell, (ic, ig)))
 
 """
 `getindex(cell::AbstractCell, i...)`
 
 Returns the coordinate of the ``i``-th node of the cell. In the case of InhomogeneousCell we can use double index `i = i1, i2` to access ``i_1``-th node of ``i_2``-th group.
 """
-Base.@propagate_inbounds function Base.getindex(cell::Union{HomogeneousCell, InhomogeneousCell}, ic::Int)
-	@boundscheck checkbounds(cell, ic)
+Base.@propagate_inbounds function Base.getindex(cell::HomogeneousCell, ic::Int)
+	@boundscheck check_cell_index(cell, ic)
 	@inbounds getindex(cell.cell_vectors, ic)
 end
+Base.@propagate_inbounds function Base.getindex(cell::InhomogeneousCell, ic::Int)
+	@boundscheck check_cell_index(cell, ic)
+    gsizes = cell.group_sizes
+    for j in 1:num_of_groups(cell)
+        ic -= gsizes[j]
+        if ic <= 0
+            return cell.cell_vectors[j][ic + gsizes[j]]
+        end
+    end
+end
 Base.@propagate_inbounds function Base.getindex(cell::InhomogeneousCell, ic::Int, ig::Int)
-	@boundscheck checkbounds(cell, ic, ig)
-	@inbounds getindex(cell.cell_vectors, ig, ic)
+	@boundscheck check_cell_index(cell, ic, ig)
+    @inbounds cell.cell_vectors[ig][ic]
 end
 Base.@propagate_inbounds Base.getindex(cell::TrivialCell{D,T}, i::Int) where {D,T} = (@boundscheck check_cell_index(cell, i); zero(SVector{D,T}))
 
@@ -175,8 +186,7 @@ switch_coord_type(cell::TrivialCell{D,T}, ::Type{T′}) where {D,T,T′} = Trivi
 switch_coord_type(cell::HomogeneousCell{D,T}, ::Type{T′}) where {D,T,T′} = HomogeneousCell(SVector{D,T′}.(cell.cell_vectors), cell.label)
 @inline switch_coord_type(cell::HomogeneousCell{D,T}, ::Type{T}) where {D,T} = cell
 function switch_coord_type(cell::InhomogeneousCell{D,T}, ::Type{T′}) where {D,T,T′}
-    new_cell_vectors = similar(cell.cell_vectors, SVector{D,T′})
-    new_cell_vectors .= cell.cell_vectors
+    new_cell_vectors = map(x->map(y->SVector{D,T′}(y),x), cell.cell_vectors)
     return InhomogeneousCell(new_cell_vectors, cell.label)
 end
 @inline switch_coord_type(cell::InhomogeneousCell{D,T}, ::Type{T}) where {D,T} = cell

@@ -51,7 +51,7 @@ If `primitive_vecs` is omitted as well, hypercubic lattice is constructed. Inste
 RegularLattice(lattice_dims::NTuple{D,Int}[, a::Number = 1]; label = :cubic, periodic = true)
 ```
 
-## Unit Cells and Indexing
+## Basis Cells and Indexing
 
 There are three types of basis cells: `HomogeneousCell`, `TrivialCell`, `InhomogeneousCell`.
 
@@ -166,7 +166,7 @@ The package exports the function
 relative_coordinate(collection::AbstractNodeCollection, I1, I2)
 ```
 which returns the coordinate of node `I1` relative to node `I2`.
-The format of the indices `I1` and `I2` depends on particular type of the collection (they should correspond to the default style of index). You can find default style of indexing for basis cells in [Unit Cells and Indexing](@ref) section. The default styles for lattices are listed in subsection [Default style](@ref)
+The format of the indices `I1` and `I2` depends on particular type of the collection (they should correspond to the default style of index). You can find default style of indexing for basis cells in [Basis Cells and Indexing](@ref) section. The default styles for lattices are listed in subsection [Default style](@ref)
 
 
 !!! note

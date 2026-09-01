@@ -1,6 +1,6 @@
 module LightLattices
 
-using StaticArrays, RecursiveArrayTools, DocStringExtensions
+using StaticArrays, DocStringExtensions
 
 export AbstractNodeCollection
 
