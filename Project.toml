@@ -1,17 +1,16 @@
 name = "LightLattices"
 uuid = "c2d87ffe-efce-4f64-b293-8fcb5ddda528"
-authors = ["Grigory Starkov <grigorii.starkov@gmail.com>"]
 version = "0.3.0"
+authors = ["Grigory Starkov <grigorii.starkov@gmail.com>"]
+
+[workspace]
+projects = ["test", "docs"]
 
 [deps]
 DocStringExtensions = "ffbed154-4ef7-542d-bbb7-c09d3a79fcae"
-Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 
 [compat]
 DocStringExtensions = "0.9"
 StaticArrays = "1.5"
 julia = "1.12"
-
-[workspace]
-projects = ["test", "docs"]

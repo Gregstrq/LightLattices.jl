@@ -57,16 +57,16 @@ include("cells.jl")
 include("lattices.jl")
 include("utils.jl")
 #include("disordered_lattices.jl")
-#include("composite_collection.jl")
 include("physical_collection.jl")
 include("subcollection.jl")
+include("composite_collection.jl")
 
 
 export AbstractNodeCollection
 export AbstractCell, TrivialCell, HomogeneousCell, InhomogeneousCell
 export AbstractLattice, RegularLattice
-export PhysicalCollection, Subcollection
-#export DisorderedLattice, CompositeCollection
+export PhysicalCollection, Subcollection, CompositeCollection
+#export DisorderedLattice 
 export switch_coord_type
 export relative_coordinate
 export num_of_groups, group_size

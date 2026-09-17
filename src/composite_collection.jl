@@ -5,7 +5,7 @@ $(TYPEDFIELDS)
 A composite type for a physical collection composed from other physical collections and subcollections.
 The groups of the underlying collections are combined together and form the groups of the `CompositeCollection`.
 """
-struct CompositeCollection{D,T, ET, N, CST<:NTuple{N, AbstractPhysicalCollection{D,T}}} <: AbstracPhysicalCollection{D,T, ET}
+struct CompositeCollection{D,T, ET, N, CST<:NTuple{N, AbstractPhysicalCollection{D,T}}} <: AbstractPhysicalCollection{D,T, ET}
     """
     Tuple of underlying collections.
     """
@@ -22,20 +22,20 @@ struct CompositeCollection{D,T, ET, N, CST<:NTuple{N, AbstractPhysicalCollection
     The tuple of all the elements of the underlying collections combined together.
     """
     elements::ET
-    function CompositeCollection(collections::NTuple{N, SimpleNodeCollection{D,T}}) where {N,D,T}
+    function CompositeCollection(collections::NTuple{N, AbstractPhysicalCollection{D,T}}) where {N,D,T}
         elements = merge_tuples(map(get_elements, collections)...)
         group_numbers = map(num_of_groups, collections)
         new{D,T, typeof(elements), N, typeof(collections)}(collections, group_numbers, sum(group_numbers))
     end
 end
 """
-$(TYPEDSGINATURES)
+$(TYPEDSIGNATURES)
 
 Combine several `PhysicalCollection`-s or `Subcollection`-s into a single `CompositeCollection`.
 """
 compose(col1::AbstractPhysicalCollection{D,T}, col2::AbstractPhysicalCollection{D,T}, col::Vararg{AbstractPhysicalCollection{D,T}, N}) where {D,T,N} = CompositeCollection((col1,col2, cols...))
 
-merge_tuples(t1::Tuple, ts::Vararg{Tuple, N}) = merge_tuples((t1..., first(ts)...), Base.tail(ts)...)
+merge_tuples(t1::Tuple, ts::Vararg{Tuple, N}) where {N} = merge_tuples((t1..., first(ts)...), Base.tail(ts)...)
 merge_tuples(t::Tuple) = t
 
 num_of_groups(ccol::CompositeCollection) = ccol.num_of_groups
