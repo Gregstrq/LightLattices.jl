@@ -11,11 +11,7 @@ StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 [compat]
 DocStringExtensions = "0.9"
 StaticArrays = "1.5"
-julia = "1.7"
+julia = "1.12"
 
-[extras]
-Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
-Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
-
-[targets]
-test = ["Unitful", "Test"]
+[workspace]
+projects = ["test", "docs"]

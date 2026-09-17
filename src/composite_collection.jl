@@ -1,61 +1,64 @@
-const SimpleNodeCollection{D,T} = Union{AbstractCell{D,T},AbstractLattice{D,T}}
-
 """
 $(TYPEDEF)
-$TYPEDFIELDS
+$(TYPEDFIELDS)
 
-A composite type for a collection of nodes composed from other simpler collections.
+A composite type for a physical collection composed from other physical collections and subcollections.
+The groups of the underlying collections are combined together and form the groups of the `CompositeCollection`.
 """
-struct CompositeCollection{D,T, N, CST<:NTuple{N, SimpleNodeCollection{D,T}}} <: AbstractNodeCollection{D,T}
+struct CompositeCollection{D,T, ET, N, CST<:NTuple{N, AbstractPhysicalCollection{D,T}}} <: AbstracPhysicalCollection{D,T, ET}
     """
     Tuple of underlying collections.
     """
     collections::CST
-    group_sizes::NTuple{N,Int}
-    total_group_length::Int
-    CompositeCollection(collections::NTuple{N, SimpleNodeCollection{D,T}}) where {N,D,T} = new{D,T,N, typeof(collecitons)}(collections, num_of_groups.(collections), sum(num_of_groups, collections))
+    """
+    Tuple of the numbers of groups in each of the underlying collections.
+    """
+    group_numbers::NTuple{N,Int}
+    """
+    Total number of groups
+    """
+    num_of_groups::Int
+    """
+    The tuple of all the elements of the underlying collections combined together.
+    """
+    elements::ET
+    function CompositeCollection(collections::NTuple{N, SimpleNodeCollection{D,T}}) where {N,D,T}
+        elements = merge_tuples(map(get_elements, collections)...)
+        group_numbers = map(num_of_groups, collections)
+        new{D,T, typeof(elements), N, typeof(collections)}(collections, group_numbers, sum(group_numbers))
+    end
 end
+"""
+$(TYPEDSGINATURES)
 
-CompositeCollection(collection1::SimpleNodeCollection{D,T}, collection2::SimpleNodeCollection{D,T}, collections...) where {D,T} = CompositeCollection((collection1, collection2, collections...))
+Combine several `PhysicalCollection`-s or `Subcollection`-s into a single `CompositeCollection`.
+"""
+compose(col1::AbstractPhysicalCollection{D,T}, col2::AbstractPhysicalCollection{D,T}, col::Vararg{AbstractPhysicalCollection{D,T}, N}) where {D,T,N} = CompositeCollection((col1,col2, cols...))
 
-Base.@propagate_inbounds function _get_col_and_group(cnodes::CompositeCollection, ig)
-    @boundscheck 1≤ig≤cnodes.total_group_length
-    @inbounds for ic = 1:length(cnodes.group_sizes)
-        ig -= cnodes.group_sizes[ic]
+merge_tuples(t1::Tuple, ts::Vararg{Tuple, N}) = merge_tuples((t1..., first(ts)...), Base.tail(ts)...)
+merge_tuples(t::Tuple) = t
+
+num_of_groups(ccol::CompositeCollection) = ccol.num_of_groups
+
+@propagate_inbounds function _get_col_and_group(ccol::CompositeCollection, ig)
+    @boundscheck check_groupbounds(ccol, ig)
+    for ic = 1:length(ccol.group_numbers)
+        ig -= ccol.group_numbers[ic]
         if ig <=0
-            return cnodes.collections[ic], cnodes.group_sizes[ic]+ig
+            return ccol.collections[ic], ccol.group_numbers[ic]+ig
         end
     end
 end
 
-num_of_groups(cnodes::CompositeCollection) = cnodes.total_group_length
-Base.@propagate_inbounds group_size(cnodes::CompositeCollection, ig) = group_size(_get_col_and_group(cnodes, ig)...)
-
-Base.length(cnodes::CompositeCollection) = sum(length, cnodes.collections)
-
-is_homogeneous(cnodes::CompositeCollection) = IsHomogeneous(false)
-
-Base.@propagate_inbounds _transform_col_index(collection::AbstractNodeCollection, i, ig::Int) = _transform_col_index(is_homogeneous(collection), collection, i, ig)
-Base.@propagate_inbounds _transform_col_index(::IsHomogeneous{true}, collection::AbstractNodeCollection, i::Tuple, ig::Int) = i
-Base.@propagate_inbounds _transform_col_index(::IsHomogeneous{false}, collection::AbstractNodeCollection, i::Tuple, ig::Int) = (i, ig)
-
-Base.@propagate_inbounds function Base.getindex(cnodes::CompositeCollection, I::Tuple{Any,Any,Vararg{Any}})
-    @inbounds i = I[1:end-1]
-    @inbounds ig_raw = last(I)
-    col, ig = _get_col_and_group(cnodes, ig_raw)
-    col[_transform_col_index(col, i, ig)]
+@propagate_inbounds function _get_col_index(ccol::CompositeCollection, il::Int, ig_raw::Int)
+    pcol, ig = _get_col_and_group(ccol, ig_raw)
+    return pcol, _translate_index(pcol, il, ig)
 end
-Base.@propagate_inbounds Base.getindex(cnodes::CompositeCollection, i1, i2, is...) = getindex(cnodes, (i1,i2,is...))
 
-"""
-$(TYPEDEF)
+@propagate_inbounds group_size(ccol::CompositeCollection, ig) = group_size(_get_col_and_group(ccol, ig)...)
 
-For the composite collection, all the underlying lattices are treated as if they have non-periodic boundary conditions.
-"""
-Base.@propagate_inbounds relative_coordinate(cnodes::CompositeCollection, I1::Tuple{Any,Any,Vararg{Any}}, I2::Tuple{Any,Any,Vararg{Any}}) = cnodes[I1]-cnodes[I2]
+length(ccol::CompositeCollection) = sum(length, ccol.collections)
 
-_get_col_iter(collection::AbstractNodeCollection, offset::Int) = _get_col_iter(is_homogeneous(collection), collection, offset)
-_get_col_iter(htrait::IsHomogeneous{true}, collection::AbstractNodeCollection, offset::Int) = Iterators.map(x->(x...,offset+1), eachindex(collection))
-_get_col_iter(htrait::IsHomogeneous{false}, collection::AbstractNodeCollection, offset::Int) = Iterators.flatten(Iterators.map(x->(x..., ig+offset), @inbounds group_iterator(htrait, collection, ig)) for ig=1:num_of_groups(collection)) 
+is_homogeneous(ccol::CompositeCollection) = IsHomogeneous{false}()
 
-Base.eachindex(cnodes::CompositeCollection) = flatten(_get_col_iter(col) for col in cnodes.collections)
+@propagate_inbounds getindex(ccol::CompositeCollection, il::Int, ig_raw::Int) = getindex(_get_col_index(ccol, il, ig)...)

@@ -1,0 +1,8 @@
+[deps]
+LightLattices = "c2d87ffe-efce-4f64-b293-8fcb5ddda528"
+StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+UnitfulGauss = "c51fb484-b8fd-4959-9bde-858457374af6"
+
+[sources]
+LightLattices = {path = ".."}

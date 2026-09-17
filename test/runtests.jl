@@ -1,4 +1,4 @@
-using Unitful, StaticArrays, LightLattices, Test
+using UnitfulGauss, StaticArrays, LightLattices, Test
 
 ###############################################################
 #
