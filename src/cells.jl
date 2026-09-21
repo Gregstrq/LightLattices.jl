@@ -81,6 +81,13 @@ compute_type(x::T) where {T<:Number} = T
 compute_type(x::Tuple) = promote_type(typeof.(x)...)
 compute_type(x::AbstractVector) = eltype(x)
 
+###
+### General convenience constructor
+
+cell(cell_vectors::Vector; label=nothing) = HomogeneousCell(cell_vectors, label)
+cell(cell_vectors1::Vector, cell_vectors2::Vector, vecss::Vararg{Vector, N}; label = nothing) where {N} = cell((cell_vectors1, cell_vectors2, vecss...); label=label)
+cell(vecss::Tuple{Vector, Vector, Vararg{Vector}}; label=nothing) = InhomogeneousCell(vecss, label) 
+
 
 ###
 ### TrivialCell type

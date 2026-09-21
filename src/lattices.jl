@@ -90,9 +90,9 @@ Convenient constructor which allows to specify the label and boundary condition 
 RegularLattice(lattice_dims::NTuple{D, Int}, primitive_vecs::SMatrix{D,D}, basis_cell::AbstractCell{D}; label=nothing, periodic=true) where {D} =
     RegularLattice(lattice_dims, primitive_vecs, basis_cell, label, periodic)
 
-@inline rlattice(lattice_dims::NTuple{D, Int}, args...; kwargs...) where {D} = RegularLattice(lattice_dims, args...; kwargs...)
+@inline lattice(lattice_dims::NTuple{D, Int}, args...; kwargs...) where {D} = RegularLattice(lattice_dims, args...; kwargs...)
+@inline lattice(lattice_dims::NTuple{D, Int}, primitive_vecs::SMatrix{D,D,<:Number}, basis_cell::AbstractCell{D}; label=nothing, periodic=true) where {D} = RegularLattice(lattice_dims, primitive_vecs, basis_cell; label, periodic)
 
-@inline rchain(len::Int, args...; kwargs...) = RegularLattice((len,), args...; kwargs...)
 
 """
 $(TYPEDSIGNATURES)

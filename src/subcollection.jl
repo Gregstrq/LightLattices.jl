@@ -49,8 +49,10 @@ $(TYPEDFIELDS).
     end
 end
 Subcollection(pcol::PhysicalCollection, indices::AbstractVector) = Subcollection(pcol, ntuple(i->i, num_of_groups(pcol)), ntuple(i->indices, num_of_groups(pcol)))
-Subcollection(pcol::PhysicalCollection, indices::AbstractVector{<:Pair{Int}}) = Subcollection(pcol, Tuple(first(p) for p in indices), Tuple(last(p) for p in indices))
 Subcollection(pcol::PhysicalCollection, indices::Dict{Int}) = Subcolleciton(pcol, Tuple(keys(indices)), Tuple(values(indices)))
+Subcollection(pcol::PhysicalCollection, indices::AbstractVector{<:Pair{Int}}) = Subcollection(pcol, Tuple(first(p) for p in indices), Tuple(last(p) for p in indices))
+Subcollection(pcol::PhysicalCollection, indices::NTuple{N,Pair{Int}}) where {N} = Subcollection(pcol, Tuple(first(p) for p in indices), Tuple(last(p) for p in indices))
+Subcollection(pcol::PhysicalCollection, p1::Pair{Int}, ps::Vararg{Pair{Int},N}) where N = Subcollection(pcol, (p1, ps...))
 
 Subcollection(pcol::PhysicalCollection{D,T,ET,<:RegularLattice}, lattice_indices::CartesianIndices{D}) where {D,T,ET} = Subcollection(pcol, lattice_indices, Colon(), ntuple(i->i, num_of_groups(pcol)))
 Subcollection(pcol::PhysicalCollection{D,T,ET,<:RegularLattice}, lattice_indices::CartesianIndices{D}, cell_indices::Union{Colon, AbstractVector{Int}}, group_indices::NTuple{N, Int}) where {D,T,ET, N} = Subcollection(pcol, ntuple(i->(lattice_indices, cell_indices), Val(N)), group_indices)

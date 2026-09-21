@@ -19,12 +19,14 @@ Trait to distinguish homogeneous and inhomogeneous collections. Informally speak
 """
 struct IsHomogeneous{BT} end
 """
-$(TYPEDSIGNATURES)
+```julia
+is_homogeneous(nodes::AbstractNodeCollection)
+```
 
 Computes the `IsHomogeneous` trait for the given collection.
 Returns `IsHomogeneous{true}()` for single-group collections and `IsHomogeneous{false}` otherwise.
 """
-function is_homogeneous(nodes::AbstractNodeCollection) end
+function is_homogeneous end
 
 """
 $(TYPEDEF)
@@ -46,11 +48,13 @@ element(::IsHomogeneous{true}, pcol::AbstractPhysicalCollection) = first(get_ele
 
 @inline get_elements(pcol::AbstractPhysicalCollection) = pcol.elements
 """
-$(TYPEDSIGNATURES)
+```julia
+relative_coordinate(collection::AbstractNodeCollection, i1, i2)
+```
 
-Returns the coordinate of node with index `i1` relative to coordinate of the node with index `i2`.
+Returns the coordinate of node with index `i1` relative to coordinate of the node with index `i2` for the collection `collection`.
 """
-@propagate_inbounds function relative_coordinate(collection::AbstractNodeCollection, i1, i2) end
+function relative_coordinate end
 
 
 include("cells.jl")
@@ -66,6 +70,7 @@ export AbstractNodeCollection
 export AbstractCell, TrivialCell, HomogeneousCell, InhomogeneousCell
 export AbstractLattice, RegularLattice
 export PhysicalCollection, Subcollection, CompositeCollection
+export cell, lattice
 #export DisorderedLattice 
 export switch_coord_type
 export relative_coordinate
