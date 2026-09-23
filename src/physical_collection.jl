@@ -34,7 +34,7 @@ is_homogeneous(pcol::PhysicalCollection) = is_homogeneous(pcol.nodes)
 
 @propagate_inbounds relative_coordinate(pcol::PhysicalCollection, I1, I2) = relative_coordinate(pcol.nodes, I1, I2)
 
-@propagate_inbounds group_iterator(pcol::PhysicalCollection, ig::Int) = group_iterator(pcol, ig)
+@propagate_inbounds group_iterator(pcol::PhysicalCollection, ig::Int) = group_iterator(pcol.nodes, ig)
 
 eachindex(pcol::PhysicalCollection) = eachindex(pcol.nodes)
 
@@ -73,5 +73,5 @@ lattice(lattice_dims::NTuple{D,Int}, primitive_vecs::SMatrix{D,D,T}, ps::Vector{
 lattice(lattice_dims::NTuple{D,Int}, primitive_vecs::SMatrix{D,D,T}, ps::NTuple{N,Pair}; label=simple, periodic=true, cell_label=nothing, decoder=identity) where {D,T<:Number, N} =
             PhysicalCollection(
                 lattice(lattice_dims, primitive_vecs, cell(map(last, ps)...; label=cell_label); label, periodic),
-                map(first, ps)
+                map(p -> decoder(first(p)), ps)
             )

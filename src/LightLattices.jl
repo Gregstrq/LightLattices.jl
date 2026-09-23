@@ -42,7 +42,7 @@ element(pcol::AbstractPhysicalCollection, ig::Int)
 Returns an object corresponding to the `ig`-th group of the collection.
 """
 element(col::AbstractNodeCollection, I...) = throw(ErrorException("The function is defined only for the subtypes of `AbstractPhysicalCollection`."))
-@propagate_inbounds element(pcol::AbstractPhysicalCollection, I...) = element(is_homogeneous(col), col, I...)
+@propagate_inbounds element(pcol::AbstractPhysicalCollection, I...) = element(is_homogeneous(pcol), pcol, I...)
 @propagate_inbounds element(::IsHomogeneous, pcol::AbstractPhysicalCollection, ig::Int) = (@boundscheck check_groupbounds(pcol, ig); get_elements(pcol)[ig])
 element(::IsHomogeneous{true}, pcol::AbstractPhysicalCollection) = first(get_elements(pcol))
 

@@ -1,4 +1,5 @@
 [deps]
+IsotopeTable = "301f09c9-9f3f-4b04-816f-ee47ab44b8cb"
 LightLattices = "c2d87ffe-efce-4f64-b293-8fcb5ddda528"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"

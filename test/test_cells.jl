@@ -1,5 +1,6 @@
-tcell = TrivialCell{3, Float64}()
+const tcell = TrivialCell{3, Float64}()
 @testset "Trivial cell" begin
+    @test is_homogeneous(tcell) == IsHomogeneous{true}()
     @test_throws BoundsError tcell[2]
     @test tcell[1] == SVector{3, Float64}(0.0,0.0,0.0)
     @test relative_coordinate(tcell, 1, 1) == SVector{3, Float64}(0.0,0.0,0.0)
@@ -8,10 +9,11 @@ tcell = TrivialCell{3, Float64}()
 	@test_throws ErrorException group_size(tcell, 2)
 end
 
-dcell = HomogeneousCell([[0,0,0],[0.25,0.25,0.25]], :diamond)
-dcell_tuples = HomogeneousCell([(0,0.0,0),(0.25,0.25,0.25)], :diamond)
-dcell_unlabeled = HomogeneousCell([[0,0,0],[0.25,0.25,0.25]])
+const dcell = HomogeneousCell([[0,0,0],[0.25,0.25,0.25]], :diamond)
+const dcell_tuples = HomogeneousCell([(0,0.0,0),(0.25,0.25,0.25)], :diamond)
+const dcell_unlabeled = HomogeneousCell([[0,0,0],[0.25,0.25,0.25]])
 @testset "Homogeneous unit cell of diamond" begin
+    @test is_homogeneous(dcell) == IsHomogeneous{true}()
     @test_throws BoundsError dcell[3]
     @test dcell[2] == SVector{3,Float64}(0.25,0.25,0.25)
     @test relative_coordinate(dcell, 2, 1) == SVector{3,Float64}(0.25,0.25,0.25)
@@ -38,9 +40,10 @@ fpvecs = hcat(af*[0.5, 0.5*sqrt(3), 0.0],
 cell_vectors_raw1 = [[0.0, 0.0, 0.25], [0.0, 0.0, 0.75]]
 cell_vectors_raw2 = [[x, y, 0.25], [-y, x-y, 0.25], [y-x, -x, 0.25],
                   [-x, -y, 0.75], [y, y-x, 0.75], [x-y, x, 0.75]]
-fcell_vectors = ([fpvecs*vec for vec in cell_vectors_raw1], [fpvecs*vec for vec in cell_vectors_raw2])
-fcell = InhomogeneousCell([fpvecs*vec for vec in cell_vectors_raw1], [fpvecs*vec for vec in cell_vectors_raw2]; label = :fluorapatite_magnetic)
+const fcell_vectors = ([fpvecs*vec for vec in cell_vectors_raw1], [fpvecs*vec for vec in cell_vectors_raw2])
+const fcell = InhomogeneousCell([fpvecs*vec for vec in cell_vectors_raw1], [fpvecs*vec for vec in cell_vectors_raw2]; label = :fluorapatite_magnetic)
 @testset "Inhomogeneous unit cell for magnetic sublattice of fluorapatite" begin
+    @test is_homogeneous(fcell) == IsHomogeneous{false}()
     @test_throws BoundsError fcell[9]
     @test_throws BoundsError fcell[3,1]
     @test_throws BoundsError fcell[7, 2]
@@ -60,12 +63,15 @@ end
 
 ### Tests for switch_coord_type
 
-mock_h_cell = HomogeneousCell([[0,0,0], [1,1,1]])
-mock_ih_cell = InhomogeneousCell([[0,0,0]], [[1,1,1]])
-tcell_transformed = switch_coord_type(tcell, Int)
-mock_h_cell_transformed = switch_coord_type(mock_h_cell, Float64)
-mock_ih_cell_transformed = switch_coord_type(mock_ih_cell, Float64)
+const mock_h_cell = HomogeneousCell([[0,0,0], [1,1,1]])
+const mock_ih_cell = InhomogeneousCell([[0,0,0]], [[1,1,1]])
+const tcell_transformed = switch_coord_type(tcell, Int)
+const mock_h_cell_transformed = switch_coord_type(mock_h_cell, Float64)
+const mock_ih_cell_transformed = switch_coord_type(mock_ih_cell, Float64)
 @testset "Switching of coordinate type" begin
+    @test is_homogeneous(tcell_transformed) == IsHomogeneous{true}()
+    @test is_homogeneous(mock_h_cell_transformed) == IsHomogeneous{true}()
+    @test is_homogeneous(mock_ih_cell_transformed) == IsHomogeneous{false}()
 	@test switch_coord_type(tcell, Float64) == tcell
 	@test switch_coord_type(mock_h_cell, Int) === mock_h_cell
 	@test switch_coord_type(mock_ih_cell, Int) === mock_ih_cell

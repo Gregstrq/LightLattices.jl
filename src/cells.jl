@@ -148,11 +148,12 @@ Returns the size of the `ig`-th homogeneous group inside a cell.
 @inline checkbounds(collection::AbstractNodeCollection, I...) = checkbounds(Bool, collection, I...) || throw(BoundsError(collection, I))
 @inline checkbounds(::Type{Bool}, collection::AbstractNodeCollection, I...) = check_linear_index(is_homogeneous(collection), collection, I...)
 
-@inline check_linear_index(::IsHomogeneous, collection::AbstractNodeCollection, ic::Int) = (1<=ic<=length(collection))
-@inline check_linear_index(::IsHomogeneous{false}, collection::AbstractNodeCollection, ic::Int, ig::Int) =
+@inline check_linear_index(::IsHomogeneous, collection::AbstractCell, ic::Int) = (1<=ic<=length(collection))
+@inline check_linear_index(::IsHomogeneous, collection::AbstractNodeCollection, ic::Int, ig::Int) =
     check_group_index(collection, ig) && (1<=ic<=group_size(collection, ig))
 
 @inline check_linear_index(::IsHomogeneous{true}, cell::TrivialCell, i::Int) = i==1
+@inline check_linear_index(::IsHomogeneous{true}, cell::TrivialCell, ic::Int, ig::Int) = (ic==1) && (ig==1)
 
 """
 `getindex(cell::AbstractCell, i...)`
@@ -206,4 +207,3 @@ end
 
 
 @propagate_inbounds relative_coordinate(cell::AbstractCell, i1, i2) = cell[i1...] - cell[i2...]
-

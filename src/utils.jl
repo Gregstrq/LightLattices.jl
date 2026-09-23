@@ -44,13 +44,24 @@ Returns `true` if the index `i1` occurs before `i2` while iterating over a node 
 
 eachindex(col::AbstractNodeCollection) = eachindex(is_homogeneous(col), col)
 eachindex(::IsHomogeneous{true}, col::AbstractNodeCollection) = col |> length |> Base.OneTo
-eachindex(htrait::IsHomogeneous{false}, col::AbstractNodeCollection) = Iterators.flatten(Iterators.map(x->(x...,ig), @inbounds group_iterator(htrait, col, ig)) for ig = Base.OneTo(num_of_groups(col)))
+eachindex(htrait::IsHomogeneous{false}, col::AbstractNodeCollection) = Iterators.flatten(Iterators.map(x->(x...,ig), @inbounds group_iterator(col, ig)) for ig = Base.OneTo(num_of_groups(col)))
 
 eachindex(lattice::RegularLattice) = Iterators.map(I->(first(I),last(I)...), Iterators.product(CartesianIndices(lattice.lattice_dims), eachindex(lattice.basis_cell)))
 
 
-@propagate_inbounds group_iterator(::IsHomogeneous{false}, col::AbstractNodeCollection, ig::Int) = Base.OneTo(group_size(col, ig))
-@propagate_inbounds group_iterator(::IsHomogeneous{false}, lattice::RegularLattice, ig::Int) = Iterators.product(CartesianIndices(lattice.lattice_dims), Base.OneTo(@inbounds group_size(lattice.basis_cell, ig)))
+"""
+    group_iterator(collection, ig)
+
+Iterate over the indices within group `ig`, omitting the group index itself.
+For inhomogeneous collections, append `ig` when indexing the collection.
+"""
+@propagate_inbounds function group_iterator(col::AbstractNodeCollection, ig::Int)
+    @boundscheck check_groupbounds(col, ig)
+    return group_iterator(is_homogeneous(col), col, ig)
+end
+
+@propagate_inbounds group_iterator(::IsHomogeneous, col::AbstractNodeCollection, ig::Int) = Base.OneTo(group_size(col, ig))
+@propagate_inbounds group_iterator(::IsHomogeneous, lattice::RegularLattice, ig::Int) = Iterators.product(CartesianIndices(lattice.lattice_dims), Base.OneTo(@inbounds group_size(lattice.basis_cell, ig)))
 
 macro CI(args...)
     if last(args).head==:tuple

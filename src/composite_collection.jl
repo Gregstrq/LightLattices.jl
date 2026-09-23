@@ -25,7 +25,7 @@ struct CompositeCollection{D,T, ET, N, CST<:NTuple{N, AbstractPhysicalCollection
     function CompositeCollection(collections::NTuple{N, AbstractPhysicalCollection{D,T}}) where {N,D,T}
         elements = merge_tuples(map(get_elements, collections)...)
         group_numbers = map(num_of_groups, collections)
-        new{D,T, typeof(elements), N, typeof(collections)}(collections, group_numbers, sum(group_numbers))
+        new{D,T, typeof(elements), N, typeof(collections)}(collections, group_numbers, sum(group_numbers), elements)
     end
 end
 """
@@ -33,7 +33,7 @@ $(TYPEDSIGNATURES)
 
 Combine several `PhysicalCollection`-s or `Subcollection`-s into a single `CompositeCollection`.
 """
-compose(col1::AbstractPhysicalCollection{D,T}, col2::AbstractPhysicalCollection{D,T}, col::Vararg{AbstractPhysicalCollection{D,T}, N}) where {D,T,N} = CompositeCollection((col1,col2, cols...))
+compose(col1::AbstractPhysicalCollection{D,T}, col2::AbstractPhysicalCollection{D,T}, cols::Vararg{AbstractPhysicalCollection{D,T}, N}) where {D,T,N} = CompositeCollection((col1,col2, cols...))
 
 merge_tuples(t1::Tuple, ts::Vararg{Tuple, N}) where {N} = merge_tuples((t1..., first(ts)...), Base.tail(ts)...)
 merge_tuples(t::Tuple) = t
@@ -52,7 +52,7 @@ end
 
 @propagate_inbounds function _get_col_index(ccol::CompositeCollection, il::Int, ig_raw::Int)
     pcol, ig = _get_col_and_group(ccol, ig_raw)
-    return pcol, _translate_index(pcol, il, ig)
+    return _get_col_index(pcol, il, ig)
 end
 
 @propagate_inbounds group_size(ccol::CompositeCollection, ig) = group_size(_get_col_and_group(ccol, ig)...)
@@ -61,4 +61,9 @@ length(ccol::CompositeCollection) = sum(length, ccol.collections)
 
 is_homogeneous(ccol::CompositeCollection) = IsHomogeneous{false}()
 
-@propagate_inbounds getindex(ccol::CompositeCollection, il::Int, ig_raw::Int) = getindex(_get_col_index(ccol, il, ig)...)
+@propagate_inbounds function getindex(ccol::CompositeCollection, il::Int, ig_raw::Int)
+    collection, ig = _get_col_and_group(ccol, ig_raw)
+    return collection[il, ig]
+end
+
+@propagate_inbounds relative_coordinate(ccol::CompositeCollection, I1, I2) = relative_coordinate(ccol, I1, ccol, I2)

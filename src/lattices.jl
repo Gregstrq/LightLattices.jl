@@ -171,7 +171,7 @@ end
 
 ## Homogeneity trait
 
-is_homogeneous(lattice::RegularLattice) = is_homogeneous(lattice.cell)
+is_homogeneous(lattice::RegularLattice) = is_homogeneous(lattice.basis_cell)
 
 #@propagate_inbounds function translate_indices(lattice::RegularLattice{D,T,PB,<:TrivialCell}, Is) where {D,T,PB}
 #    @boundscheck map(x -> check_lattice_index(lattice, x), Is)
