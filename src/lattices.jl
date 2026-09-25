@@ -9,7 +9,7 @@ abstract type AbstractLattice{D, T, PB} <: AbstractNodeCollection{D, T} end
 $(TYPEDEF)
 $(TYPEDFIELDS)
 
-This type describes a regular arrangment of nodes in `D`-dimensional space with boundary condition `PB` (`PB=true` for periodic boundary conditions, `PB=false` for free periodic boundary conditions). A general lattice consists of identicall cells (combinations of nodes) arranged as a Bravais lattice.
+This type describes a regular arrangment of nodes in `D`-dimensional space with boundary condition `PB` (`PB=true` for periodic boundary conditions, `PB=false` for free periodic boundary conditions). A general lattice consists of identical cells (combinations of nodes) arranged as a Bravais lattice.
 """
 struct RegularLattice{D, T, PB, CT, N, L<:Union{Symbol,Nothing}} <: AbstractLattice{D, T, PB}
     """
@@ -17,7 +17,7 @@ struct RegularLattice{D, T, PB, CT, N, L<:Union{Symbol,Nothing}} <: AbstractLatt
     """
     lattice_dims::NTuple{D, Int}
     """
-    Coordinates of the primitive vectors of the underlying Bravais lattice. `primitive_vecs[:, i]` gives the ``i``-th primitive vector.
+    Cartesian coordinates of the primitive vectors of the underlying Bravais lattice. `primitive_vecs[:, i]` gives the ``i``-th primitive vector.
     """
     primitive_vecs::SMatrix{D,D, T, N}
     """
@@ -106,12 +106,12 @@ Return the number of lattice separate groups.
 length(lattice::RegularLattice) = lattice.num_of_nodes
 
 ##
-## Indexing interface.
+## Position interface.
 
 """
-`getindex(lattice::RegularLattice{D}, Index...)`
+`position(lattice::RegularLattice{D}, Index...)`
 
-Returns the coordinate of the node with index `Index`. The configurations of indices for different types of unit cell are the following:
+Returns the cartesian coordinates of the node with index `Index`. The configurations of indices for different types of unit cell are the following:
 - `TrivialCell`: `I::CartesianIndex{D}`.
 - `HomogeneousCell`: `I::CartesianIndex{D}, ic::Int`.
 - `InhomogeneousCell`: `I::CartesianIndex{D}, ic::Int, ig::Int`.
@@ -120,7 +120,7 @@ When iterating over lattice, the index at the left is iterated faster. For examp
 In the case of periodic lattice, if `CartesianIndex` is outside of the lattice dims, it is simply translated back inside.
 """
 
-@propagate_inbounds function getindex(lattice::RegularLattice{D,T}, I::CartesianIndex{D}, Ic::Vararg{Int, N}) where {D,T,N}
+@propagate_inbounds function position(lattice::RegularLattice{D,T}, I::CartesianIndex{D}, Ic::Vararg{Int, N}) where {D,T,N}
     @boundscheck checkbounds(lattice, I, Ic...)
     @inbounds _get_node(lattice, I, Ic...)
 end
@@ -144,46 +144,31 @@ end
 @inline _check_cartesian_index(b, i::Tuple{}, stop::Tuple{}) = b
 
 
-## Relative coordinate
+## Relative position
 
-@propagate_inbounds function relative_coordinate(lattice::RegularLattice{D,T,false}, I1::TI, I2::TI) where {D,T, TI<:Union{CartesianIndex{D}, Tuple{CartesianIndex{D},Vararg{Int}}}}
-    return lattice[I1] - lattice[I2]
+@propagate_inbounds function relative_position(lattice::RegularLattice{D,T,false}, I1::TI, I2::TI) where {D,T, TI<:Union{CartesianIndex{D}, Tuple{CartesianIndex{D},Vararg{Int}}}}
+    return position(lattice, I1) - position(lattice, I2)
 end
 
-@propagate_inbounds getindex(lattice::RegularLattice, i::Tuple{CartesianIndex, Vararg{Int}}) = getindex(lattice, i...)
+@propagate_inbounds position(lattice::RegularLattice, i::Tuple{CartesianIndex, Vararg{Int}}) = position(lattice, i...)
 
 """
 $(TYPEDSIGNATURES)
 
-For periodic lattice, the "shortest" relative coordinate is calculated instead.
+For periodic lattice, the "shortest" relative position is calculated instead.
 
 For, that the following heuristic is used. Cartesian indices of the two nodes are shifted by the same amount, so that the cartesian index of the second node corresponds to the central cell of the lattice. Then, the cartesian index of the first node is translated back inside the lattice. The relative coordinate is computed using the resulting indices.
 
 This heuristic guarantees that
-`relative_coordinate(lattice, I1, I2) == -relative_coordinate(lattice, I2, I1)`.
+`relative_position(lattice, I1, I2) == -relative_position(lattice, I2, I1)`.
 """
-@propagate_inbounds function relative_coordinate(lattice::RegularLattice{D,T,true,<:TrivialCell}, I1::TI, I2::TI) where {D,T, TI<:CartesianIndex{D}}
-    return lattice[I1 + lattice.central_cell - I2] - lattice[lattice.central_cell]
+@propagate_inbounds function relative_position(lattice::RegularLattice{D,T,true,<:TrivialCell}, I1::TI, I2::TI) where {D,T, TI<:CartesianIndex{D}}
+    return position(lattice, I1 + lattice.central_cell - I2) - position(lattice, lattice.central_cell)
 end
-@propagate_inbounds function relative_coordinate(lattice::RegularLattice{D,T,true}, I1::TI, I2::TI) where {D,T, TI<:Tuple{CartesianIndex{D},Vararg{Int}}}
-    return lattice[first(I1) + lattice.central_cell - first(I2), Base.tail(I1)...] - lattice[lattice.central_cell, Base.tail(I2)...]
+@propagate_inbounds function relative_position(lattice::RegularLattice{D,T,true}, I1::TI, I2::TI) where {D,T, TI<:Tuple{CartesianIndex{D},Vararg{Int}}}
+    return position(lattice, first(I1) + lattice.central_cell - first(I2), Base.tail(I1)...) - position(lattice, lattice.central_cell, Base.tail(I2)...)
 end
 
 ## Homogeneity trait
 
 is_homogeneous(lattice::RegularLattice) = is_homogeneous(lattice.basis_cell)
-
-#@propagate_inbounds function translate_indices(lattice::RegularLattice{D,T,PB,<:TrivialCell}, Is) where {D,T,PB}
-#    @boundscheck map(x -> check_lattice_index(lattice, x), Is)
-#    return Is
-#end
-#@propagate_inbounds function translate_indices(lattice::RegularLattice{D,T,PB,<:HomogeneousCell}, Is) where {D,T,PB}
-#    @boundscheck map(x -> check_lattice_index(lattice, x), Is)
-#    return Base.product(Is, Base.OneTo(length(lattice.unit_cell)))
-#end
-#@propagate_inbounds function translate_indices(lattice::RegularLattice{D,T,PB,<:InhomogeneousCell}, Is, ig::Int) where {D,T,PB}
-#    @boundscheck map(x -> check_lattice_index(lattice, x), Is)
-#    return Base.product(Is, Base.OneTo(group_size(lattice.unit_cell, ig)), ig)
-#end
-
-#@inline to_default(lattice::RegularLattice{D,T,PB,<:TrivialCell}, x::Int, y::Int, z::Int) = CartesianIndex

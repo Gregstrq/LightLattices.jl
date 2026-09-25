@@ -7,10 +7,12 @@ authors = ["Grigory Starkov <grigorii.starkov@gmail.com>"]
 projects = ["test", "docs"]
 
 [deps]
+AtomsBase = "a963bdd2-2df7-4f54-a1ee-49d51e6be12a"
 DocStringExtensions = "ffbed154-4ef7-542d-bbb7-c09d3a79fcae"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 
 [compat]
+AtomsBase = "0.5.3"
 DocStringExtensions = "0.9"
 StaticArrays = "1.5"
 julia = "1.12"

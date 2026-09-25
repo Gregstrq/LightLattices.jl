@@ -1,4 +1,4 @@
-using LightLattices: element
+using LightLattices: position, species
 using IsotopeTable: isotopes
 
 const diagonal_indices = [(CartesianIndex(i,i,i), 1) for i in 1:11]
@@ -17,18 +17,20 @@ const diagonal = Subcollection(phys_cubic_lattice_f, 1 => reverse(diagonal_indic
     @test num_of_groups(diagonal) == 1
     @test length(diagonal) == 11
     @test group_size(diagonal, 1) == 11
-    @test element(diagonal, 1) == isotopes[:F19]
-    @test_throws ErrorException element(diagonal, 2)
+    @test group_species(diagonal, 1) == isotopes[:F19]
+    @test_throws ErrorException group_species(diagonal, 2)
     @test_throws ErrorException group_size(diagonal, 2)
-    @test diagonal[1, 1] ≈ 2.725u"Å" * SVector(1,1,1)
-    @test diagonal[11, 1] == phys_cubic_lattice_f[CartesianIndex(11,11,11)]
+    @test position(diagonal, 1, 1) ≈ 2.725u"Å" * SVector(1,1,1)
+    @test first(diagonal[1, 1]) ≈ 2.725u"Å" * SVector(1,1,1)
+    @test last(diagonal[1, 1]) == isotopes[:F19]
+    @test position(diagonal, 11, 1) == position(phys_cubic_lattice_f, CartesianIndex(11,11,11))
     # Subcollection indices 2 and 10 select the corresponding diagonal cells.
-    @test relative_coordinate(diagonal, (2, 1), (10, 1)) ≈
-        relative_coordinate(phys_cubic_lattice_f, diagonal_indices[2], diagonal_indices[10])
-    @test relative_coordinate(diagonal, (2, 1), phys_cubic_lattice_f, (CartesianIndex(3,4,5), 1)) ≈
-        relative_coordinate(phys_cubic_lattice_f, diagonal_indices[2], (CartesianIndex(3,4,5), 1))
-    @test relative_coordinate(phys_cubic_lattice_f, (CartesianIndex(3,4,5), 1), diagonal, (2, 1)) ≈
-        relative_coordinate(phys_cubic_lattice_f, (CartesianIndex(3,4,5), 1), diagonal_indices[2])
+    @test relative_position(diagonal, (2, 1), (10, 1)) ≈
+        relative_position(phys_cubic_lattice_f, diagonal_indices[2], diagonal_indices[10])
+    @test relative_position(diagonal, (2, 1), phys_cubic_lattice_f, (CartesianIndex(3,4,5), 1)) ≈
+        relative_position(phys_cubic_lattice_f, diagonal_indices[2], (CartesianIndex(3,4,5), 1))
+    @test relative_position(phys_cubic_lattice_f, (CartesianIndex(3,4,5), 1), diagonal, (2, 1)) ≈
+        relative_position(phys_cubic_lattice_f, (CartesianIndex(3,4,5), 1), diagonal_indices[2])
     @test_throws BoundsError diagonal[0, 1]
     @test_throws BoundsError diagonal[12, 1]
     @test_throws BoundsError Subcollection(phys_cubic_lattice_f, 1 => [(CartesianIndex(12,12,12), 1)])
@@ -41,18 +43,19 @@ const cross = Subcollection(phys_diamond_lattice_p, 1 => reverse(diamond_cross_i
     @test num_of_groups(cross) == 1
     @test length(cross) == 14
     @test group_size(cross, 1) == 14
-    @test element(cross, 1) == isotopes[:C13]
-    @test_throws ErrorException element(cross, 2)
+    @test group_species(cross, 1) == isotopes[:C13]
+    @test_throws ErrorException group_species(cross, 2)
     @test_throws ErrorException group_size(cross, 2)
-    @test cross[1] == dpvecs * SVector(11,11,10) + dcell[1]
-    @test cross[14] == phys_diamond_lattice_p[diamond_cross_indices[14]...]
+    @test position(cross, 1) == dpvecs * SVector(11,11,10) + dcell[1]
+    @test cross[1] == (dpvecs * SVector(11,11,10) + dcell[1], isotopes[:C13])
+    @test position(cross, 14) == position(phys_diamond_lattice_p, diamond_cross_indices[14]...)
     # Include both basis sites and cells across the periodic boundary.
-    @test relative_coordinate(cross, (1, 1), (14, 1)) ≈
-        relative_coordinate(phys_diamond_lattice_p, diamond_cross_indices[1], diamond_cross_indices[14])
-    @test relative_coordinate(cross, (1, 1), phys_diamond_lattice_p, (CartesianIndex(1,1,1), 2)) ≈
-        relative_coordinate(phys_diamond_lattice_p, diamond_cross_indices[1], (CartesianIndex(1,1,1), 2))
-    @test relative_coordinate(phys_diamond_lattice_p, (CartesianIndex(1,1,1), 2), cross, (1, 1)) ≈
-        relative_coordinate(phys_diamond_lattice_p, (CartesianIndex(1,1,1), 2), diamond_cross_indices[1])
+    @test relative_position(cross, (1, 1), (14, 1)) ≈
+        relative_position(phys_diamond_lattice_p, diamond_cross_indices[1], diamond_cross_indices[14])
+    @test relative_position(cross, (1, 1), phys_diamond_lattice_p, (CartesianIndex(1,1,1), 2)) ≈
+        relative_position(phys_diamond_lattice_p, diamond_cross_indices[1], (CartesianIndex(1,1,1), 2))
+    @test relative_position(phys_diamond_lattice_p, (CartesianIndex(1,1,1), 2), cross, (1, 1)) ≈
+        relative_position(phys_diamond_lattice_p, (CartesianIndex(1,1,1), 2), diamond_cross_indices[1])
     @test_throws BoundsError cross[0, 1]
     @test_throws BoundsError cross[15, 1]
     @test_throws BoundsError Subcollection(phys_diamond_lattice_p, 1 => [(CartesianIndex(0,0,0), 3)])
@@ -69,21 +72,25 @@ const column = Subcollection(phys_fluorapatite_lattice_p,
     @test length(column) == 44
     @test group_size(column, 1) == 11
     @test group_size(column, 2) == 33
-    @test element(column, 1) == isotopes[:F19]
-    @test element(column, 2) == isotopes[:P31]
-    @test_throws ErrorException element(column, 3)
+    @test group_species(column, 1) == isotopes[:F19]
+    @test group_species(column, 2) == isotopes[:P31]
+    @test_throws ErrorException group_species(column, 3)
     @test_throws ErrorException group_size(column, 3)
-    @test column[1, 1] ≈ fpvecs * SVector(6,6,1) + fcell[1, 1]
-    @test column[11, 1] == phys_fluorapatite_lattice_p[CartesianIndex(6,6,11), 1, 1]
-    @test column[1, 2] ≈ fpvecs * SVector(6,6,1) + fcell[1, 2]
-    @test column[33, 2] == phys_fluorapatite_lattice_p[CartesianIndex(6,6,11), 3, 2]
+    @test position(column, 1, 1) ≈ fpvecs * SVector(6,6,1) + fcell[1, 1]
+    @test first(column[1, 1]) ≈ fpvecs * SVector(6,6,1) + fcell[1, 1]
+    @test last(column[1, 1]) == isotopes[:F19]
+    @test position(column, 11, 1) == position(phys_fluorapatite_lattice_p, CartesianIndex(6,6,11), 1, 1)
+    @test position(column, 1, 2) ≈ fpvecs * SVector(6,6,1) + fcell[1, 2]
+    @test first(column[1, 2]) ≈ fpvecs * SVector(6,6,1) + fcell[1, 2]
+    @test last(column[1, 2]) == isotopes[:P31]
+    @test position(column, 33, 2) == position(phys_fluorapatite_lattice_p, CartesianIndex(6,6,11), 3, 2)
     # Index 33 in the P group is its third basis site in the last column cell.
-    @test relative_coordinate(column, (33, 2), (1, 1)) ≈
-        relative_coordinate(phys_fluorapatite_lattice_p, (CartesianIndex(6,6,11), 3, 2), (CartesianIndex(6,6,1), 1, 1))
-    @test relative_coordinate(column, (33, 2), phys_fluorapatite_lattice_p, (CartesianIndex(5,6,1), 2, 1)) ≈
-        relative_coordinate(phys_fluorapatite_lattice_p, (CartesianIndex(6,6,11), 3, 2), (CartesianIndex(5,6,1), 2, 1))
-    @test relative_coordinate(phys_fluorapatite_lattice_p, (CartesianIndex(5,6,1), 2, 1), column, (33, 2)) ≈
-        relative_coordinate(phys_fluorapatite_lattice_p, (CartesianIndex(5,6,1), 2, 1), (CartesianIndex(6,6,11), 3, 2))
+    @test relative_position(column, (33, 2), (1, 1)) ≈
+        relative_position(phys_fluorapatite_lattice_p, (CartesianIndex(6,6,11), 3, 2), (CartesianIndex(6,6,1), 1, 1))
+    @test relative_position(column, (33, 2), phys_fluorapatite_lattice_p, (CartesianIndex(5,6,1), 2, 1)) ≈
+        relative_position(phys_fluorapatite_lattice_p, (CartesianIndex(6,6,11), 3, 2), (CartesianIndex(5,6,1), 2, 1))
+    @test relative_position(phys_fluorapatite_lattice_p, (CartesianIndex(5,6,1), 2, 1), column, (33, 2)) ≈
+        relative_position(phys_fluorapatite_lattice_p, (CartesianIndex(5,6,1), 2, 1), (CartesianIndex(6,6,11), 3, 2))
     @test_throws BoundsError column[0, 1]
     @test_throws BoundsError column[12, 1]
     @test_throws BoundsError column[34, 2]

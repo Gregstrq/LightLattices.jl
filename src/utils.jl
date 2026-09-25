@@ -7,15 +7,17 @@
 @propagate_inbounds rearrange(x::Tuple, y::Tuple, val::Val{D}) where {D} = rearrange((x...,first(y)), Base.tail(y), Val{D-1}())
 @propagate_inbounds rearrange(x::NTuple{N,Int}, y::Tuple, val::Val{0}) where {N} = CartesianIndex{N}(x),y...
 
-@propagate_inbounds getindex(lattice::RegularLattice, i::Int, I...) = getindex(lattice::RegularLattice, (i, I...))
-@propagate_inbounds getindex(lattice::RegularLattice{D,T,PB,CT,L}, I::NTuple{D′,Int}) where {D,T,PB,CT,L,D′} = getindex(lattice, rearrange(I, Val{D}())...)
+@propagate_inbounds position(lattice::RegularLattice, i::Int, I...) = position(lattice, (i, I...))
+@propagate_inbounds position(lattice::RegularLattice{D,T,PB,CT,L}, I::NTuple{D′,Int}) where {D,T,PB,CT,L,D′} = position(lattice, rearrange(I, Val{D}())...)
+@inline checkbounds(lattice::RegularLattice, i::Int, I...) = checkbounds(lattice, (i, I...))
+@inline checkbounds(lattice::RegularLattice{D,T,PB,CT,L}, I::NTuple{D′,Int}) where {D,T,PB,CT,L,D′} = checkbounds(lattice, rearrange(I, Val{D}())...)
 
 #@propagate_inbounds getindex(lattice::RegularLattice, i::Tuple{CartesianIndex, Vararg{Int}}) = getindex(lattice, i...)
 
-@propagate_inbounds relative_coordinate(lattice::RegularLattice{D}, i1::NTuple{D′, Int}, i2::NTuple{D′, Int}) where {D, D′} = relative_coordinate(lattice, rearrange(i1, Val{D}()), rearrange(i2, Val{D}()))
+@propagate_inbounds relative_position(lattice::RegularLattice{D}, i1::NTuple{D′, Int}, i2::NTuple{D′, Int}) where {D, D′} = relative_position(lattice, rearrange(i1, Val{D}()), rearrange(i2, Val{D}()))
 
-@propagate_inbounds getindex(lattice::RegularLattice{D}, i1::NTuple{D,Int}, I...) where {D} = getindex(lattice, CartesianIndex(i1), I...)
-@propagate_inbounds relative_coordinate(lattice::RegularLattice{D}, i1::T, i2::T) where {D, T<:Tuple{NTuple{D,Int},Vararg{Int}}} = relative_coordinate(lattice, (CartesianIndex(first(i1)), Base.tail(i1)...), (CartesianIndex(first(i2)), Base.tail(i2)...))
+@propagate_inbounds position(lattice::RegularLattice{D}, i1::NTuple{D,Int}, I...) where {D} = position(lattice, CartesianIndex(i1), I...)
+@propagate_inbounds relative_position(lattice::RegularLattice{D}, i1::T, i2::T) where {D, T<:Tuple{NTuple{D,Int},Vararg{Int}}} = relative_position(lattice, (CartesianIndex(first(i1)), Base.tail(i1)...), (CartesianIndex(first(i2)), Base.tail(i2)...))
 
 @inline _lin2cart(il::Int, dims::Tuple{Int, Vararg{Int}}, nc::Int) = _lin2cart_recurse(il-1, (), dims, nc)
 @inline function _lin2cart_recurse(f::Int, cart::Tuple, dims::Tuple{Int,Vararg{Int}}, nc::Int)
@@ -24,6 +26,9 @@
 end
 
 @inline _lin2cart_recurse(f::Int, cart::Tuple, dims::Tuple{}, nc::Int) = CartesianIndex(cart), (f % nc)+1
+
+@inline _translate_index(col::AbstractNodeCollection, I...) = I
+@propagate_inbounds _translate_index(lattice::RegularLattice, il::Int, ig::Int) = (_lin2cart(il, lattice.lattice_dims, group_size(lattice.basis_cell, ig))..., ig)
 
 ###
 
@@ -42,9 +47,9 @@ Returns `true` if the index `i1` occurs before `i2` while iterating over a node 
 
 ### Iteration utils
 
-eachindex(col::AbstractNodeCollection) = eachindex(is_homogeneous(col), col)
-eachindex(::IsHomogeneous{true}, col::AbstractNodeCollection) = col |> length |> Base.OneTo
-eachindex(htrait::IsHomogeneous{false}, col::AbstractNodeCollection) = Iterators.flatten(Iterators.map(x->(x...,ig), @inbounds group_iterator(col, ig)) for ig = Base.OneTo(num_of_groups(col)))
+eachindex(col::AbstractCollection) = eachindex(is_homogeneous(col), col)
+eachindex(::IsHomogeneous{true}, col::AbstractCollection) = col |> length |> Base.OneTo
+eachindex(htrait::IsHomogeneous{false}, col::AbstractCollection) = Iterators.flatten(Iterators.map(x->(x...,ig), @inbounds group_iterator(col, ig)) for ig = Base.OneTo(num_of_groups(col)))
 
 eachindex(lattice::RegularLattice) = Iterators.map(I->(first(I),last(I)...), Iterators.product(CartesianIndices(lattice.lattice_dims), eachindex(lattice.basis_cell)))
 
@@ -55,12 +60,12 @@ eachindex(lattice::RegularLattice) = Iterators.map(I->(first(I),last(I)...), Ite
 Iterate over the indices within group `ig`, omitting the group index itself.
 For inhomogeneous collections, append `ig` when indexing the collection.
 """
-@propagate_inbounds function group_iterator(col::AbstractNodeCollection, ig::Int)
+@propagate_inbounds function group_iterator(col::AbstractCollection, ig::Int)
     @boundscheck check_groupbounds(col, ig)
     return group_iterator(is_homogeneous(col), col, ig)
 end
 
-@propagate_inbounds group_iterator(::IsHomogeneous, col::AbstractNodeCollection, ig::Int) = Base.OneTo(group_size(col, ig))
+@propagate_inbounds group_iterator(::IsHomogeneous, col::AbstractCollection, ig::Int) = Base.OneTo(group_size(col, ig))
 @propagate_inbounds group_iterator(::IsHomogeneous, lattice::RegularLattice, ig::Int) = Iterators.product(CartesianIndices(lattice.lattice_dims), Base.OneTo(@inbounds group_size(lattice.basis_cell, ig)))
 
 macro CI(args...)

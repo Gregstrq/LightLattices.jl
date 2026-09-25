@@ -3,7 +3,7 @@ const tcell = TrivialCell{3, Float64}()
     @test is_homogeneous(tcell) == IsHomogeneous{true}()
     @test_throws BoundsError tcell[2]
     @test tcell[1] == SVector{3, Float64}(0.0,0.0,0.0)
-    @test relative_coordinate(tcell, 1, 1) == SVector{3, Float64}(0.0,0.0,0.0)
+    @test relative_position(tcell, 1, 1) == SVector{3, Float64}(0.0,0.0,0.0)
 	@test num_of_groups(tcell) == 1
 	@test group_size(tcell, 1) == 1
 	@test_throws ErrorException group_size(tcell, 2)
@@ -16,7 +16,7 @@ const dcell_unlabeled = HomogeneousCell([[0,0,0],[0.25,0.25,0.25]])
     @test is_homogeneous(dcell) == IsHomogeneous{true}()
     @test_throws BoundsError dcell[3]
     @test dcell[2] == SVector{3,Float64}(0.25,0.25,0.25)
-    @test relative_coordinate(dcell, 2, 1) == SVector{3,Float64}(0.25,0.25,0.25)
+    @test relative_position(dcell, 2, 1) == SVector{3,Float64}(0.25,0.25,0.25)
 	@test typeof(dcell_tuples) == typeof(dcell)
 	@test dcell_tuples.cell_vectors == dcell.cell_vectors
 	@test dcell_unlabeled.label == nothing
@@ -51,10 +51,10 @@ const fcell = InhomogeneousCell([fpvecs*vec for vec in cell_vectors_raw1], [fpve
     @test fcell[2, 1] == fcell_vectors[1][2]
     @test fcell[3] == fcell_vectors[2][1]
     @test fcell[1,2] == fcell_vectors[2][1]
-    @test relative_coordinate(fcell, 5, 2) == fcell_vectors[2][3] - fcell_vectors[1][2]
-    @test relative_coordinate(fcell, (3,2), 2) == fcell_vectors[2][3] - fcell_vectors[1][2]
-    @test relative_coordinate(fcell, 5, (2,1)) == fcell_vectors[2][3] - fcell_vectors[1][2]
-    @test relative_coordinate(fcell, (3,2), (2,1)) == fcell_vectors[2][3] - fcell_vectors[1][2]
+    @test relative_position(fcell, 5, 2) == fcell_vectors[2][3] - fcell_vectors[1][2]
+    @test relative_position(fcell, (3,2), 2) == fcell_vectors[2][3] - fcell_vectors[1][2]
+    @test relative_position(fcell, 5, (2,1)) == fcell_vectors[2][3] - fcell_vectors[1][2]
+    @test relative_position(fcell, (3,2), (2,1)) == fcell_vectors[2][3] - fcell_vectors[1][2]
 	@test num_of_groups(fcell) == 2
 	@test group_size(fcell, 1) == 2
 	@test group_size(fcell, 2) == 6

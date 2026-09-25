@@ -3,7 +3,7 @@
 The package provides a convenient interface to work with Lattices with arbitrary reapeated basis cells.
 
 
- For the exported types of basis cells and lattices, it defines the array interface which allows to access the coordinate of specific node by its index. In addition to that, it provides a function `relative_coordinate` which allows to calculate the shortest vector connecting the two nodes.
+ For the exported types of basis cells and lattices, it defines the array interface which allows to access the coordinate of specific node by its index. In addition to that, it provides a function `relative_position` which allows to calculate the shortest vector connecting the two nodes.
 
 [![Build status (Github Actions)](https://github.com/Gregstrq/LightLattices.jl/workflows/CI/badge.svg)](https://github.com/Gregstrq/LightLattices.jl/actions)
 [![codecov.io](http://codecov.io/github/Gregstrq/LightLattices.jl/coverage.svg?branch=main)](http://codecov.io/github/Gregstrq/LightLattices.jl?branch=main)
@@ -17,12 +17,12 @@ The package exports the type `RegularLattice{D,T}` and several types used to des
 node_collection[I]
 ```
 which allows to access the coordinate of the `I`-th node of the collection.
-In addition to that, the package provides the function `relative_coordinate`:
+In addition to that, the package provides the function `relative_position`:
 ```julia
-relative_coordinate(node_collection::AbstractNodeCollection, I1, I2)
+relative_position(node_collection::AbstractNodeCollection, I1, I2)
 ```
 which returns the vector connecting the `I2`-th node with the `I1`-th node.
-In the case of `RegularLattice`-s with periodic boundary conditions, `relative_coordinate` returns the shortest connecting vector.
+In the case of `RegularLattice`-s with periodic boundary conditions, `relative_position` returns the shortest connecting vector.
 (Actually, in the case of complex basis cell, there can be several "shortest" vectors. The problem is resolved by a simple heuristic, described in the [docs](https://gregstrq.github.io/LightLattices.jl/dev/manual/#Lattices-with-periodic-boundaries)).
 
 There are three available types to describe the basis cell: `HomogeneousCell`, `TrivialCell` and `InhomogeneousCell`.

@@ -5,7 +5,7 @@ $(TYPEDFIELDS)
 A composite type for a physical collection composed from other physical collections and subcollections.
 The groups of the underlying collections are combined together and form the groups of the `CompositeCollection`.
 """
-struct CompositeCollection{D,T, ET, N, CST<:NTuple{N, AbstractPhysicalCollection{D,T}}} <: AbstractPhysicalCollection{D,T, ET}
+struct CompositeCollection{D,T, ST, N, CST<:NTuple{N, AbstractPhysicalCollection{D,T}}} <: AbstractPhysicalCollection{D,T, ST}
     """
     Tuple of underlying collections.
     """
@@ -19,13 +19,13 @@ struct CompositeCollection{D,T, ET, N, CST<:NTuple{N, AbstractPhysicalCollection
     """
     num_of_groups::Int
     """
-    The tuple of all the elements of the underlying collections combined together.
+    The tuple of all the species of the underlying collections combined together.
     """
-    elements::ET
+    species::ST
     function CompositeCollection(collections::NTuple{N, AbstractPhysicalCollection{D,T}}) where {N,D,T}
-        elements = merge_tuples(map(get_elements, collections)...)
+        species = merge_tuples(map(get_species, collections)...)
         group_numbers = map(num_of_groups, collections)
-        new{D,T, typeof(elements), N, typeof(collections)}(collections, group_numbers, sum(group_numbers), elements)
+        new{D,T, typeof(species), N, typeof(collections)}(collections, group_numbers, sum(group_numbers), species)
     end
 end
 """
@@ -61,9 +61,9 @@ length(ccol::CompositeCollection) = sum(length, ccol.collections)
 
 is_homogeneous(ccol::CompositeCollection) = IsHomogeneous{false}()
 
-@propagate_inbounds function getindex(ccol::CompositeCollection, il::Int, ig_raw::Int)
+@propagate_inbounds function position(ccol::CompositeCollection, il::Int, ig_raw::Int)
     collection, ig = _get_col_and_group(ccol, ig_raw)
-    return collection[il, ig]
+    return position(collection, il, ig)
 end
 
-@propagate_inbounds relative_coordinate(ccol::CompositeCollection, I1, I2) = relative_coordinate(ccol, I1, ccol, I2)
+@propagate_inbounds relative_position(ccol::CompositeCollection, I1, I2) = relative_position(ccol, I1, ccol, I2)

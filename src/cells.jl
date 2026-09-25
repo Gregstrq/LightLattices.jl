@@ -129,10 +129,6 @@ Return the number of separate groups in a cell.
 @inline num_of_groups(cell::Union{TrivialCell, HomogeneousCell}) = 1
 @inline num_of_groups(cell::InhomogeneousCell{D,T,N}) where {D,T,N} = N
 
-@inline check_groupbounds(collection::AbstractNodeCollection, ig::Int) = check_group_index(collection, ig) || throw(ErrorException("Group index $(ig) is out of range for collection $(collection)"))
-@inline check_group_index(collection::AbstractNodeCollection, ig::Int) = check_group_index(is_homogeneous(collection), collection, ig)
-@inline check_group_index(::IsHomogeneous{true}, collection::AbstractNodeCollection, ig::Int) = (ig==1)
-@inline check_group_index(::IsHomogeneous{false}, collection::AbstractNodeCollection, ig::Int) = (1≤ig≤num_of_groups(collection))
 
 """
 $(TYPEDSIGNATURES)
@@ -145,26 +141,21 @@ Returns the size of the `ig`-th homogeneous group inside a cell.
 ###
 ### Indexing
 
-@inline checkbounds(collection::AbstractNodeCollection, I...) = checkbounds(Bool, collection, I...) || throw(BoundsError(collection, I))
-@inline checkbounds(::Type{Bool}, collection::AbstractNodeCollection, I...) = check_linear_index(is_homogeneous(collection), collection, I...)
 
-@inline check_linear_index(::IsHomogeneous, collection::AbstractCell, ic::Int) = (1<=ic<=length(collection))
-@inline check_linear_index(::IsHomogeneous, collection::AbstractNodeCollection, ic::Int, ig::Int) =
-    check_group_index(collection, ig) && (1<=ic<=group_size(collection, ig))
 
 @inline check_linear_index(::IsHomogeneous{true}, cell::TrivialCell, i::Int) = i==1
 @inline check_linear_index(::IsHomogeneous{true}, cell::TrivialCell, ic::Int, ig::Int) = (ic==1) && (ig==1)
 
 """
-`getindex(cell::AbstractCell, i...)`
+`position(cell::AbstractCell, i...)`
 
-Returns the coordinate of the ``i``-th node of the cell. In the case of InhomogeneousCell we can use double index `i = i1, i2` to access ``i_1``-th node of ``i_2``-th group.
+Returns the cartesian coordinates of the ``i``-th node of the cell. In the case of InhomogeneousCell we can use double index `i = i1, i2` to access ``i_1``-th node of ``i_2``-th group.
 """
-@propagate_inbounds function getindex(cell::HomogeneousCell, ic::Int)
+@propagate_inbounds function position(cell::HomogeneousCell, ic::Int)
 	@boundscheck checkbounds(cell, ic)
-	@inbounds getindex(cell.cell_vectors, ic)
+	@inbounds cell.cell_vectors[ic]
 end
-@propagate_inbounds function getindex(cell::InhomogeneousCell, ic::Int)
+@propagate_inbounds function position(cell::InhomogeneousCell, ic::Int)
 	@boundscheck checkbounds(cell, ic)
     gsizes = cell.group_sizes
     for j in 1:num_of_groups(cell)
@@ -174,13 +165,13 @@ end
         end
     end
 end
-@propagate_inbounds getindex(cell::TrivialCell{D,T}, i::Int) where {D,T} = (@boundscheck checkbounds(cell, i); zero(SVector{D,T}))
+@propagate_inbounds position(cell::TrivialCell{D,T}, i::Int) where {D,T} = (@boundscheck checkbounds(cell, i); zero(SVector{D,T}))
 
-@propagate_inbounds function getindex(cell::InhomogeneousCell, ic::Int, ig::Int)
+@propagate_inbounds function position(cell::InhomogeneousCell, ic::Int, ig::Int)
 	@boundscheck checkbounds(cell, ic, ig)
     @inbounds cell.cell_vectors[ig][ic]
 end
-@propagate_inbounds getindex(cell::Union{TrivialCell, HomogeneousCell}, ic::Int, ig::Int) = (@boundscheck check_groupbounds(cell, ig); getindex(cell, ic))
+@propagate_inbounds position(cell::Union{TrivialCell, HomogeneousCell}, ic::Int, ig::Int) = (@boundscheck check_groupbounds(cell, ig); position(cell, ic))
 
 
 
@@ -206,4 +197,5 @@ end
 ### Relative coordinate of two nodes in a cell
 
 
-@propagate_inbounds relative_coordinate(cell::AbstractCell, i1, i2) = cell[i1...] - cell[i2...]
+@propagate_inbounds relative_position(cell::AbstractCell, i1, i2) =
+    position(cell, i1...) - position(cell, i2...)
