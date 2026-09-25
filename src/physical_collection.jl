@@ -47,16 +47,16 @@ eachindex(pcol::PhysicalCollection) = eachindex(pcol.nodes)
 #
 #
 
-cell(sp, cell_vectors::Vector; label=nothing, decoder=identity) =
+cluster(sp, cell_vectors::Vector; label=nothing, decoder=identity) =
             PhysicalCollection(
-                cell(cell_vectors; label),
+                cluster(cell_vectors; label),
                 decoder(sp)
             )
-cell(p::Pair{T,<:Vector}; label=nothing, decoder=identity) where T = cell(first(p), last(p); label=label, decoder=decoder)
-cell(p1::Pair{T1,<:Vector}, p2::Pair{T2,<:Vector}, ps...; label=nothing, decoder=identity) where {T1,T2} = cell((p1,p2,ps...); label, decoder)
-cell(ps::NTuple{N, Pair}; label=nothing, decoder=identity) where {N} =
+cluster(p::Pair{T,<:Vector}; label=nothing, decoder=identity) where T = cluster(first(p), last(p); label=label, decoder=decoder)
+cluster(p1::Pair{T1,<:Vector}, p2::Pair{T2,<:Vector}, ps...; label=nothing, decoder=identity) where {T1,T2} = cluster((p1,p2,ps...); label, decoder)
+cluster(ps::NTuple{N, Pair}; label=nothing, decoder=identity) where {N} =
             PhysicalCollection(
-                cell(map(last, ps); label),
+                cluster(map(last, ps); label),
                 map(x->decoder(first(x)), ps)
             )
 
@@ -74,6 +74,6 @@ lattice(lattice_dims::NTuple{D,Int}, primitive_vecs::SMatrix{D,D,T}, p1::Pair{ST
 lattice(lattice_dims::NTuple{D,Int}, primitive_vecs::SMatrix{D,D,T}, ps::Vector{<:Pair}; label=:simple, periodic=true, cell_label=nothing, decoder=identity) where {D,T<:Number} = lattice(lattice_dims, primitive_vecs, Tuple(ps); label, periodic, cell_label, decoder)
 lattice(lattice_dims::NTuple{D,Int}, primitive_vecs::SMatrix{D,D,T}, ps::NTuple{N,Pair}; label=simple, periodic=true, cell_label=nothing, decoder=identity) where {D,T<:Number, N} =
             PhysicalCollection(
-                lattice(lattice_dims, primitive_vecs, cell(map(last, ps)...; label=cell_label); label, periodic),
+                lattice(lattice_dims, primitive_vecs, cluster(map(last, ps)...; label=cell_label); label, periodic),
                 map(p -> decoder(first(p)), ps)
             )

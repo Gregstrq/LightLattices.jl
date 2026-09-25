@@ -35,17 +35,18 @@ function test_iteration_format(collection)
     for ig in 1:num_of_groups(collection)
         group_indices = collect(group_iterator(collection, ig))
         @test length(group_indices) == group_size(collection, ig)
-        @test all(i -> checkbounds(collection, i..., ig), group_indices)
+        @test all(i -> checkbounds(collection, i...), group_indices)
+        if !homogeneous
+            @test all(i -> last(i) == ig, group_indices)
+        end
 
         if homogeneous && eltype(indices) <: Integer && eltype(group_indices) <: Tuple
             # Ordered homogeneous subcollections use linear eachindex indices.
             linear_indices = LinearIndices(group_indices)
             append!(combined_indices,
                 (linear_indices[Tuple(I)..., ic] for (I, ic) in vec(group_indices)))
-        elseif homogeneous
-            append!(combined_indices, vec(group_indices))
         else
-            append!(combined_indices, ((i..., ig) for i in vec(group_indices)))
+            append!(combined_indices, vec(group_indices))
         end
     end
     @test combined_indices == indices

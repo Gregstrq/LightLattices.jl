@@ -32,7 +32,7 @@ function is_homogeneous end
 """
 $(TYPEDEF)
 
-Abstract collection of nodes in `D`-dimensional space, occupied by the physical objects of species `ST`. The type `T` is used to represent coordinates.
+Abstract collection of nodes in `D`-dimensional space, occupied by the physical objects from a Tuple of species `ST`. The type `T` is used to represent coordinates.
 """
 abstract type AbstractPhysicalCollection{D, T, ST} end
 
@@ -60,7 +60,7 @@ group_species(::IsHomogeneous{true}, pcol::AbstractPhysicalCollection) = first(g
 
 """
 ```julia
-position(collection::AbstractCollection, I...)
+AtomsBase.position(collection::AbstractCollection, I...)
 ```
 
 Returns the cartesian coordinates of the node with index `I`.
@@ -74,7 +74,7 @@ _species_index(htrait::IsHomogeneous{false}, collection::AbstractPhysicalCollect
 
 """
 ```julia
-$(TYPEDSIGNATURES)
+AtomsBase.species(collection::AbstractPhysicalCollection, I...)
 ```
 
 Return the species at index `I` of an `AbstractPhysicalCollection`.
@@ -132,7 +132,7 @@ function group_size end
 
 """
 ```julia
-group_iterator(collection::AbstractCollection, ig::Int)
+(collection::AbstractCollection, ig::Int)
 ```
 
 Return an iterator over the indices inside the `ig`-th group.
@@ -181,7 +181,7 @@ export AbstractNodeCollection, AbstractPhysicalCollection, AbstractCollection
 export AbstractCell, TrivialCell, HomogeneousCell, InhomogeneousCell
 export AbstractLattice, RegularLattice
 export PhysicalCollection, Subcollection, CompositeCollection
-export cell, lattice
+export cluster, lattice
 #export DisorderedLattice 
 export switch_coord_type
 export position, relative_position

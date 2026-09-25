@@ -84,9 +84,14 @@ compute_type(x::AbstractVector) = eltype(x)
 ###
 ### General convenience constructor
 
-cell(cell_vectors::Vector; label=nothing) = HomogeneousCell(cell_vectors, label)
-cell(cell_vectors1::Vector, cell_vectors2::Vector, vecss::Vararg{Vector, N}; label = nothing) where {N} = cell((cell_vectors1, cell_vectors2, vecss...); label=label)
-cell(vecss::Tuple{Vector, Vector, Vararg{Vector}}; label=nothing) = InhomogeneousCell(vecss, label) 
+_dress_vectors(vecss::NTuple{N, Vector}) where {N} = map(_dress_vector, vecss)
+_dress_vector(vec::Vector{<:Number}) = [vec]
+_dress_vector(vec::Vector{<:Union{AbstractVector, SVector, Tuple}}) = vec
+
+cluster(cell_vectors::Vector; label=nothing) = HomogeneousCell(cell_vectors, label)
+cluster(cell_vectors::Vector{<:Number}; label=nothing) = HomogeneousCell([cell_vectors], label)
+cluster(cell_vectors1::Vector, cell_vectors2::Vector, vecss::Vararg{Vector, N}; label = nothing) where {N} = cluster((cell_vectors1, cell_vectors2, vecss...); label=label)
+cluster(vecss::Tuple{Vector, Vector, Vararg{Vector}}; label=nothing) = InhomogeneousCell(_dress_vectors(vecss), label)
 
 
 ###

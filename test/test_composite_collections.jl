@@ -2,7 +2,7 @@ using LightLattices: compose, position, species
 using IsotopeTable: isotopes
 
 # Insert two N15 sites between adjacent retained F sites near the column midpoint.
-const nitrogen_cell = cell(:N15,
+const nitrogen_cell = cluster(:N15,
     [position(column, 6, 1) + fraction * (position(column, 7, 1) - position(column, 6, 1)) for fraction in (1/3, 2/3)];
     label=:nitrogen_pair, decoder=isotopes)
 const fluorapatite_nitrogen = CompositeCollection((column, nitrogen_cell))

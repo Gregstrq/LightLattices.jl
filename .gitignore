@@ -23,5 +23,7 @@ docs/site/
 # environment.
 Manifest.toml
 
+test/examples.jl
+
 # Vim session file.
 src/LatticeProject.vim

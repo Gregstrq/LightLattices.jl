@@ -49,7 +49,7 @@ Returns `true` if the index `i1` occurs before `i2` while iterating over a node 
 
 eachindex(col::AbstractCollection) = eachindex(is_homogeneous(col), col)
 eachindex(::IsHomogeneous{true}, col::AbstractCollection) = col |> length |> Base.OneTo
-eachindex(htrait::IsHomogeneous{false}, col::AbstractCollection) = Iterators.flatten(Iterators.map(x->(x...,ig), @inbounds group_iterator(col, ig)) for ig = Base.OneTo(num_of_groups(col)))
+eachindex(htrait::IsHomogeneous{false}, col::AbstractCollection) = Iterators.flatten(@inbounds group_iterator(col, ig) for ig = Base.OneTo(num_of_groups(col)))
 
 eachindex(lattice::RegularLattice) = Iterators.map(I->(first(I),last(I)...), Iterators.product(CartesianIndices(lattice.lattice_dims), eachindex(lattice.basis_cell)))
 
@@ -57,16 +57,19 @@ eachindex(lattice::RegularLattice) = Iterators.map(I->(first(I),last(I)...), Ite
 """
     group_iterator(collection, ig)
 
-Iterate over the indices within group `ig`, omitting the group index itself.
-For inhomogeneous collections, append `ig` when indexing the collection.
+Returns iterator over the group `ig`. For homogeneous collections, the index of the group is omitted.
 """
 @propagate_inbounds function group_iterator(col::AbstractCollection, ig::Int)
     @boundscheck check_groupbounds(col, ig)
-    return group_iterator(is_homogeneous(col), col, ig)
+    htrait = is_homogeneous(col)
+    return @inbounds _decorate_group(htrait, group_iterator(htrait, col, ig), ig)
 end
 
 @propagate_inbounds group_iterator(::IsHomogeneous, col::AbstractCollection, ig::Int) = Base.OneTo(group_size(col, ig))
 @propagate_inbounds group_iterator(::IsHomogeneous, lattice::RegularLattice, ig::Int) = Iterators.product(CartesianIndices(lattice.lattice_dims), Base.OneTo(@inbounds group_size(lattice.basis_cell, ig)))
+
+@propagate_inbounds _decorate_group(::IsHomogeneous{true}, iterator, ig::Int) = iterator
+@propagate_inbounds _decorate_group(::IsHomogeneous{false}, iterator, ig::Int) = Iterators.map(x->(x...,ig), iterator)
 
 macro CI(args...)
     if last(args).head==:tuple

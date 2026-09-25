@@ -19,7 +19,7 @@ const dcell_unlabeled = HomogeneousCell([[0,0,0],[0.25,0.25,0.25]])
     @test relative_position(dcell, 2, 1) == SVector{3,Float64}(0.25,0.25,0.25)
 	@test typeof(dcell_tuples) == typeof(dcell)
 	@test dcell_tuples.cell_vectors == dcell.cell_vectors
-	@test dcell_unlabeled.label == nothing
+	@test dcell_unlabeled.label === nothing
 	@test num_of_groups(dcell) == 1
 	@test group_size(dcell, 1) == 2
 	@test_throws ErrorException group_size(dcell, 2)

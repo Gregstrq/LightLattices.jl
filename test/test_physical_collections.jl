@@ -1,9 +1,9 @@
-using LightLattices: cell, lattice, position, species
+using LightLattices: cluster, lattice, position, species
 using IsotopeTable: isotopes
 
-const phys_dcell = cell(:C13, dcell.cell_vectors; label=:diamond, decoder=isotopes)
-const phys_dcell_tuples = cell(:C13, [(0,0.0,0), (0.25,0.25,0.25)]; label=:diamond, decoder=isotopes)
-const phys_dcell_unlabeled = cell(:C13, dcell.cell_vectors; decoder=isotopes)
+const phys_dcell = cluster(:C13, dcell.cell_vectors; label=:diamond, decoder=isotopes)
+const phys_dcell_tuples = cluster(:C13, [(0,0.0,0), (0.25,0.25,0.25)]; label=:diamond, decoder=isotopes)
+const phys_dcell_unlabeled = cluster(:C13, dcell.cell_vectors; decoder=isotopes)
 @testset "C13-enriched diamond unit cell" begin
     @test phys_dcell isa PhysicalCollection
     @test phys_dcell.species == (isotopes[:C13],)
@@ -18,13 +18,13 @@ const phys_dcell_unlabeled = cell(:C13, dcell.cell_vectors; decoder=isotopes)
     @test relative_position(phys_dcell, 2, 1) == SVector{3,Float64}(0.25,0.25,0.25)
     @test typeof(phys_dcell_tuples) == typeof(phys_dcell)
     @test phys_dcell_tuples.nodes.cell_vectors == phys_dcell.nodes.cell_vectors
-    @test phys_dcell_unlabeled.nodes.label == nothing
+    @test phys_dcell_unlabeled.nodes.label === nothing
     @test num_of_groups(phys_dcell) == 1
     @test group_size(phys_dcell, 1) == 2
     @test_throws ErrorException group_size(phys_dcell, 2)
 end
 
-const phys_fcell = cell(:F19 => fcell_vectors[1], :P31 => fcell_vectors[2]; label=:fluorapatite_magnetic, decoder=isotopes)
+const phys_fcell = cluster(:F19 => fcell_vectors[1], :P31 => fcell_vectors[2]; label=:fluorapatite_magnetic, decoder=isotopes)
 @testset "F19 and P31 fluorapatite unit cell" begin
     @test phys_fcell isa PhysicalCollection
     @test phys_fcell.species == (isotopes[:F19], isotopes[:P31])

@@ -90,14 +90,15 @@ is_homogeneous(subcol::Subcollection{D,T, ST, IT, PCT, 1}) where {D, T, ST, IT, 
 
 @propagate_inbounds group_size(subcol::Subcollection, ig::Int) = (@boundscheck check_groupbounds(subcol, ig); subcol.group_sizes[ig])
 
+@inline checkbounds(::Type{Bool}, subcol::Subcollection{D,T,ST, <:NTuple{1, _OrderedIndexType{D}}}, I::CartesianIndex{D}, ic::Int) where {D,T,ST} = checkbounds(Bool, subcol, I, ic, 1)
+
 @inline function checkbounds(::Type{Bool}, subcol::Subcollection{D,T,ST,<:NTuple{N,_OrderedIndexType{D}}}, I::CartesianIndex{D}, ic::Int, ig::Int) where {D,T,ST,N}
     check_group_index(subcol, ig) || return false
     lattice_indices, cell_indices = subcol.indices[ig]
     return checkbounds(Bool, lattice_indices, I) && checkbounds(Bool, cell_indices, ic)
 end
 
-@propagate_inbounds function group_iterator(subcol::Subcollection{D,T,ST, <:NTuple{N, _OrderedIndexType{D}}}, ig::Int) where {D,T,ST,N}
-    @boundscheck check_groupbounds(subcol, ig)
+@propagate_inbounds function group_iterator(::IsHomogeneous, subcol::Subcollection{D,T,ST, <:NTuple{N, _OrderedIndexType{D}}}, ig::Int) where {D,T,ST,N}
     indices = subcol.indices[ig]
     return Iterators.product(CartesianIndices(size(first(indices))), Base.OneTo(indices[2]|>length))
 end
