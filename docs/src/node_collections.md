@@ -1,8 +1,12 @@
-# Manual
+# [Node Collections](@id manual-node-collections)
+
+Node collections describe geometry without attaching species. They are the underlying
+objects stored in a [PhysicalCollection](@ref physical-collection-wrapper).
+See also the [node collection examples](node_examples.md).
 
 ## Type Hierarchy
 
-All the types exported by the package are the subtypes of
+The geometry types are subtypes of
 ```julia
 abstract type AbstractNodeCollection{D,T} end
 ```
@@ -58,7 +62,7 @@ There are three types of basis cells: `HomogeneousCell`, `TrivialCell`, `Inhomog
 ### `HomogeneousCell`
 This type is used when there is no distinction between the nodes of the cell. The general constructor looks like
 ```julia
-HomogeneousCell(node_coordinates::Vector; label::Union{Symbol,Nothing}=nothing)
+HomogeneousCell(node_coordinates::Vector, label::Union{Symbol,Nothing}=nothing)
 ```
 where `node_coordinates` specifies the coordinates of the nodes. The coordinates can be specified either as `SVector`s, `Vector`s or `NTuple`s of same element type and length. Under the hood, coordinates are converted to `SVector`s.
 
@@ -163,14 +167,14 @@ For the former lattice, `cubic_free[12,12,12]` leads to `BoundsError`. For the l
 
 The package exports the function
 ```julia
-relative_coordinate(collection::AbstractNodeCollection, I1, I2)
+relative_position(collection::AbstractNodeCollection, I1, I2)
 ```
 which returns the coordinate of node `I1` relative to node `I2`.
 The format of the indices `I1` and `I2` depends on particular type of the collection (they should correspond to the default style of index). You can find default style of indexing for basis cells in [Basis Cells and Indexing](@ref) section. The default styles for lattices are listed in subsection [Default style](@ref)
 
 
 !!! note
-    If the index in default style is multicomponent, it is passed into `relative_coordinate` as a Tuple. Single `Int` or single `CartesianIndex{D}` are considered single-component.
+    If the index in default style is multicomponent, it is passed into `relative_position` as a Tuple. Single `Int` or single `CartesianIndex{D}` are considered single-component.
 
 ### Lattices with periodic boundaries
 
@@ -180,9 +184,9 @@ In the case of the lattice with non-trivial cell, it is possible that this proce
 
 In this package, I resolve this ambiguity by using a specific heuristic.
 Let me consider two nodes with indices `(I1, Ic1...)` and `(I2, Ic2...)`. Here, `I1` and `I2` are `CartesianIndice`s of cells, `Ic1` and `Ic2` are indices inside the cells.
-In the case of a lattice with periodic boundary conditions `relative_coordinate` returns
+In the case of a lattice with periodic boundary conditions `relative_position` returns
 ```julia
-lattice[Ic1 + central_cell - Ic2, Ic1...] - lattice[central_cell, Ic2...]
+lattice[I1 + central_cell - I2, Ic1...] - lattice[central_cell, Ic2...]
 ```
 Here, `central_cell` is literally the index of the central cell of the lattice:
 ```julia
@@ -191,19 +195,19 @@ central_cell = CartesianIndex(div.(lattice_dims, 2) .+ 1)
 In reality, it is central only if lattice dimensions are all odd.
 In the case of even dimensions it gives the index of one of several central cells.
 
-The idea is quite simple: both `Ic1` and `Ic2` are translated by the same amount so that `Ic2` points to the central cell. Then, `Ic1` is translated back inside the boundaries (it is performed implicitly while indexing into lattice). Finally, the resulting indices are used to compute the relative coordinate.
+The idea is quite simple: both `I1` and `I2` are translated by the same amount so that `I2` points to the central cell. Then, `I1` is translated back inside the boundaries (it is performed implicitly while indexing into lattice). Finally, the resulting indices are used to compute the relative coordinate.
 
 !!! note
     This heuristic satisfies the important property of reciprocity:
     ```julia
-    relative_coordinate(lattice, I1, I2) == - relative_coordinate(lattice, I2, I1)
+    relative_position(lattice, I1, I2) == - relative_position(lattice, I2, I1)
     ```
 
 ## Iteration
 
 The package provides `eachindex` implementation for all exported cell and lattice types.
 For cells, the iteration order is as follows: first nodes inside a group, then the groups themselves (if there are any groups).
-For lattices, the iteration over the basis cell indices is preceded by th iteration over lattice indices.
+For lattices, the iteration over the basis cell indices is preceded by the iteration over lattice indices.
 
 In addition, to that, the package provides a function to compare the indices:
 ```julia

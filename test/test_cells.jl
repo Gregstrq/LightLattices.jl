@@ -1,3 +1,5 @@
+using LightLattices: TrivialCell, HomogeneousCell, InhomogeneousCell
+
 const tcell = TrivialCell{3, Float64}()
 @testset "Trivial cell" begin
     @test is_homogeneous(tcell) == IsHomogeneous{true}()

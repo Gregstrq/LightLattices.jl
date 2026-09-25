@@ -5,7 +5,7 @@ using IsotopeTable: isotopes
 const nitrogen_cell = cluster(:N15,
     [position(column, 6, 1) + fraction * (position(column, 7, 1) - position(column, 6, 1)) for fraction in (1/3, 2/3)];
     label=:nitrogen_pair, decoder=isotopes)
-const fluorapatite_nitrogen = CompositeCollection((column, nitrogen_cell))
+const fluorapatite_nitrogen = compose(column, nitrogen_cell)
 
 @testset "Fluorapatite column with an interstitial N15 pair" begin
     @test fluorapatite_nitrogen.collections === (column, nitrogen_cell)
@@ -23,7 +23,7 @@ const fluorapatite_nitrogen = CompositeCollection((column, nitrogen_cell))
     @test_throws ErrorException group_species(fluorapatite_nitrogen, 4)
     @test_throws ErrorException group_size(fluorapatite_nitrogen, 0)
     @test_throws ErrorException group_size(fluorapatite_nitrogen, 4)
-    @test compose(column, nitrogen_cell).collections === fluorapatite_nitrogen.collections
+    @test fluorapatite_nitrogen isa LightLattices.CompositeCollection
 
     # Sample the first and last sites of each column group.
     for ig in 1:2, i in (1, group_size(column, ig))

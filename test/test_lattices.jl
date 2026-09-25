@@ -1,3 +1,5 @@
+using LightLattices: RegularLattice
+
 ### Fluorine sublattice of CaF2 is a cubic lattice.
 
 const cubic_lattice_f = RegularLattice((11,11,11), 2.725u"Å"; periodic=false)

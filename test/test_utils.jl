@@ -89,7 +89,7 @@ end
     end
 end
 
-const phosphorus_iteration_column = Subcollection(phys_fluorapatite_lattice_p,
+const phosphorus_iteration_column = view(phys_fluorapatite_lattice_p,
     2 => (fluorapatite_column_cells, [1, 3]))
 
 @testset "Subcollection iteration" begin

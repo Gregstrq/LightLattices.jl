@@ -5,7 +5,6 @@ using StaticArrays, DocStringExtensions
 import Base: getindex, checkbounds, eachindex, length, @propagate_inbounds
 import AtomsBase: position, species
 
-export AbstractNodeCollection, AbstractPhysicalCollection, AbstractCollection
 
 """
 $(TYPEDEF)
@@ -177,17 +176,17 @@ include("subcollection.jl")
 include("composite_collection.jl")
 
 
-export AbstractNodeCollection, AbstractPhysicalCollection, AbstractCollection
-export AbstractCell, TrivialCell, HomogeneousCell, InhomogeneousCell
-export AbstractLattice, RegularLattice
-export PhysicalCollection, Subcollection, CompositeCollection
+#export AbstractNodeCollection, AbstractPhysicalCollection, AbstractCollection
+#export AbstractCell, TrivialCell, HomogeneousCell, InhomogeneousCell
+#export AbstractLattice, RegularLattice
+#export PhysicalCollection, Subcollection, CompositeCollection
 export cluster, lattice
 #export DisorderedLattice 
 export switch_coord_type
 export position, relative_position
 export num_of_groups, group_size, group_species
 export IsHomogeneous, is_homogeneous, group_iterator
-export species, get_species
+export species, get_species, compose, takes_precedence
 export @CI
 
 end

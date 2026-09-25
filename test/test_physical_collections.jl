@@ -1,4 +1,4 @@
-using LightLattices: cluster, lattice, position, species
+using LightLattices: cluster, lattice, position, species, PhysicalCollection
 using IsotopeTable: isotopes
 
 const phys_dcell = cluster(:C13, dcell.cell_vectors; label=:diamond, decoder=isotopes)
