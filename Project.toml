@@ -1,6 +1,6 @@
 name = "LightLattices"
 uuid = "c2d87ffe-efce-4f64-b293-8fcb5ddda528"
-version = "0.3.0"
+version = "0.4.0"
 authors = ["Grigory Starkov <grigorii.starkov@gmail.com>"]
 
 [workspace]
