@@ -4,7 +4,7 @@ The package provides a convenient interface to describe a set of physical object
 Main focus are the Lattices with arbitrary reapeated basis cells, but one can also define a cluster of objects without a regular structure.
 
 
- For the supported types of clusters and lattices, the package partially realizes the interface of [AtomsBase.jl](https://github.com/JuliaMolSim/AtomsBase.jl): The cartesian coordinates of a node and the kind of species occupying it can be accessed using the `position` and `species` functions respectively. At the same time, `getindex` returns the `Tuple` of both position and species. Finally, 
+ For the supported types of clusters and lattices, the package partially realizes the interface of [AtomsBase.jl](https://github.com/JuliaMolSim/AtomsBase.jl): The cartesian coordinates of a node and the kind of species occupying it can be accessed using the `position` and `species` functions respectively. At the same time, `getindex` returns the `Tuple` of both position and species.
 
 In addition to that, the shortest vector connecting the two nodes can be obtained using the `relative_position` function.
 There are also convenience functions that allow to iterate over the group of nodes occupied by the same species and index into this group.
@@ -61,7 +61,7 @@ meth_mol = cluster(C12=>zeros(3)ug"Å", H1=>h_vecs; label=:methane)
 
 ### Cubic lattice with a trivial basis cell.
 
-The Fluorine nuclei in ``CaF2`` consitute a cubic lattice with lattice parameter ``a=2.725 Å``.
+The Fluorine nuclei in $CaF_2$ consitute a cubic lattice with lattice parameter $a=2.725 Å$.
 Let us construct fluorine sublattice of size ``11x11x11`` with free boundary conditions:
 ```julia
 using LightLattices, UnitfulGauss, IsotopeTable
@@ -71,8 +71,8 @@ fluorine_sublattice = lattice((11,11,11), 2.725u"Å", isotopes(:F19); label=:cu
 
 ### Diamond lattice with homogeneous basis cell.
 
-The lattice of carbon diamond is face-centered cubic with a lattice parameter `a=1.54ug"Å"` and a basis cell consisting of two nodes.
-The following creates diamond lattice with ``11x11x11`` basis cells with periodic boundary conditions:
+The lattice of carbon diamond is face-centered cubic with a lattice parameter $a=1.54 Å$ and a basis cell consisting of two nodes.
+The following creates diamond lattice with $11\times11\times11$ basis cells with periodic boundary conditions:
 ```julia
 using LightLattices
 
@@ -85,7 +85,7 @@ diamond_lattice = lattice((11,11,11), fcc_pvecs, isotopes(:C12)=>cell_vecs; labe
 
 ### Magnetic sublattice of fluorapatite with inhomogeneous basis cell.
 
-Fluorapatite has the hexagonal structure with the space group ``P6_3/m``. The three lattice parameters are ``a=b=9.462 Å`` and ``c=6.849 Å``.
+Fluorapatite has the hexagonal structure with the space group $P6_3/m$. The three lattice parameters are $a=b=9.462 Å$ and $c=6.849 Å$.
 The **c**-axis is orthogonal to (**a**, **b**) plane and the angle between **a** and **b** is ``120°``.
 Thus, we can construct the matrix of primitive vectors as
 ```julia
@@ -99,7 +99,7 @@ fpvecs = hcat(a*[0.5, 0.5*sqrt(3), 0.0],
               c*[0.0, 0.0, 1.0]
              ) |> SMatrix{3,3}
 ```
-The basis cell for magnetically active sublattice of fluorapatite contains two F nuceli at positions
+The basis cell for magnetically active sublattice of fluorapatite contains two F nuclei at positions
 ```math
 [0.0,0.0,0.25],    [0.0,0.0,0.75]
 ```
@@ -118,7 +118,7 @@ cell_vectors2 = [[x, y, 0.25], [-y, x-y, 0.25], [y-x, -x, 0.25],
                   [-x, -y, 0.75], [y, y-x, 0.75], [x-y, x, 0.75]] .|> x->fpvecs*x
 cell_vectorss = [cell_vectors1, cell_vectors2]
 ```
-Finally, we can construct the lattice. Let us choose the size of ``11x11x11`` basis cells and periodic boundary conditions.
+Finally, we can construct the lattice. Let us choose the size of $11\times11\times11$ basis cells and periodic boundary conditions.
 ```julia
 import IsotopeTable: isotopes
 
@@ -127,7 +127,7 @@ fluor_magn_sublattice = lattice((11,11,11), fpvecs, :F19=>cell_vectorss[1], :P31
 
 ### Spin chain or spin Square Lattice
 Let's say we want to create a spin lattice.
-We can describe a spin-`S` with gyromagnetic ratio `γ' by the type
+We can describe a spin-`S` with gyromagnetic ratio $\gamma$ by the type
 ```julia
 struct Spin{S, T}
     γ::T
