@@ -1,5 +1,9 @@
 [deps]
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+LightLattices = "c2d87ffe-efce-4f64-b293-8fcb5ddda528"
+
+[sources]
+LightLattices = {path = ".."}
 
 [compat]
-Documenter = "1.14"
+Documenter = "1.19"

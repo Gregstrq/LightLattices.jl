@@ -1,0 +1,69 @@
+"""
+$(TYPEDEF)
+$(TYPEDFIELDS)
+
+A composite type for a physical collection composed from other physical collections and subcollections.
+The groups of the underlying collections are combined together and form the groups of the `CompositeCollection`.
+"""
+struct CompositeCollection{D,T, ST, N, CST<:NTuple{N, AbstractPhysicalCollection{D,T}}} <: AbstractPhysicalCollection{D,T, ST}
+    """
+    Tuple of underlying collections.
+    """
+    collections::CST
+    """
+    Tuple of the numbers of groups in each of the underlying collections.
+    """
+    group_numbers::NTuple{N,Int}
+    """
+    Total number of groups
+    """
+    num_of_groups::Int
+    """
+    The tuple of all the species of the underlying collections combined together.
+    """
+    species::ST
+    function CompositeCollection(collections::NTuple{N, AbstractPhysicalCollection{D,T}}) where {N,D,T}
+        species = merge_tuples(map(get_species, collections)...)
+        group_numbers = map(num_of_groups, collections)
+        new{D,T, typeof(species), N, typeof(collections)}(collections, group_numbers, sum(group_numbers), species)
+    end
+end
+"""
+$(TYPEDSIGNATURES)
+
+Combine several `PhysicalCollection`-s or `Subcollection`-s into a single `CompositeCollection`.
+"""
+compose(col1::AbstractPhysicalCollection{D,T}, col2::AbstractPhysicalCollection{D,T}, cols::Vararg{AbstractPhysicalCollection{D,T}, N}) where {D,T,N} = CompositeCollection((col1,col2, cols...))
+
+merge_tuples(t1::Tuple, ts::Vararg{Tuple, N}) where {N} = merge_tuples((t1..., first(ts)...), Base.tail(ts)...)
+merge_tuples(t::Tuple) = t
+
+num_of_groups(ccol::CompositeCollection) = ccol.num_of_groups
+
+@propagate_inbounds function _get_col_and_group(ccol::CompositeCollection, ig)
+    @boundscheck check_groupbounds(ccol, ig)
+    for ic = 1:length(ccol.group_numbers)
+        ig -= ccol.group_numbers[ic]
+        if ig <=0
+            return ccol.collections[ic], ccol.group_numbers[ic]+ig
+        end
+    end
+end
+
+@propagate_inbounds function _get_col_index(ccol::CompositeCollection, il::Int, ig_raw::Int)
+    pcol, ig = _get_col_and_group(ccol, ig_raw)
+    return _get_col_index(pcol, il, ig)
+end
+
+@propagate_inbounds group_size(ccol::CompositeCollection, ig) = group_size(_get_col_and_group(ccol, ig)...)
+
+length(ccol::CompositeCollection) = sum(length, ccol.collections)
+
+is_homogeneous(ccol::CompositeCollection) = IsHomogeneous{false}()
+
+@propagate_inbounds function position(ccol::CompositeCollection, il::Int, ig_raw::Int)
+    collection, ig = _get_col_and_group(ccol, ig_raw)
+    return position(collection, il, ig)
+end
+
+@propagate_inbounds relative_position(ccol::CompositeCollection, I1, I2) = relative_position(ccol, I1, ccol, I2)

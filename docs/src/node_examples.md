@@ -1,0 +1,86 @@
+# Node collection examples
+
+## Chain
+Here we construct a periodic chain with ``11`` nodes. The separation between nodes is ``1`` by default.
+```julia
+using LightLattices, StaticArrays
+
+chain = RegularLattice((11,); label=:chain)
+```
+
+## Square Lattice
+Now, let us construct a square ``11\times11`` lattice with the size of the square equal to ``2``.
+```julia
+using LightLattices, StaticArrays
+
+square_lattice = RegularLattice((11,11), 2; label = :square)
+```
+
+## Cubic Lattice
+For the cubic lattice example, let us draw inspiration from the real world.
+The Fluorine nuclei in ``CaF_2`` consitute a cubic lattice with lattice parameter ``a=2.725\mathring A``.
+Let us construct fluorine sublattice of size ``11\times11\times11`` with free boundary conditions:
+```julia
+using LightLattices, StaticArrays, UnitfulGauss
+
+fluorine_sublattice = RegularLattice((11,11,11), 2.725u"Å"; label=:cubic, periodic=false)
+```
+
+## Diamond lattice with homogeneous basis cell.
+The lattice of diamond is face-centered cubic with a basis cell consisting of two nodes.
+Let us take the size of cube equal to `1`. The following creates diamond lattice with ``11\times11\times11`` basis cells with periodic boundary conditions:
+```julia
+using LightLattices, StaticArrays
+
+fcc_pvecs = 0.5*hcat([0,1,1],[1,1,0],[1,0,1]) |> SMatrix{3,3}
+
+diamond_cell = HomogeneousCell([[0.0,0.0,0.0], [0.25,0.25,0.25]], :diamond)
+dimond_lattice = RegularLattice((11,11,11), fcc_pvecs, diamond_cell; label=:fcc)
+```
+Here, `HomogeneousCell` constructor takes the vector of coordinates of the nodes.
+Coordinates can be expressed as `Vector`-s, `SVector`-s or `NTuple`-s. Under the hood, all coordinates are converted to `SVector`-s.
+
+## Magnetic sublattice of fluorapatite with inhomogeneous basis cell.
+This example is going to be quite elaborated, but it illustrates the application of additional type of basis cell: `InhomogeneousCell`.
+Fluorapatite has the hexagonal structure with the space group ``P6_3/m``. The three lattice parameters are ``a=b=9.462\mathring A`` and ``c=6.849\mathring A``.
+The ``\bf{c}``-axis is orthogonal to ``(\bf{a}, \bf{b})`` plane and the angle between ``\bf{a}`` and ``\bf{b}`` is ``120^\circ``.
+Thus, we can construct the matrix of primitive vectors as
+```julia
+using UnitfulGauss
+
+a = 9.462u"Å"
+c = 6.849u"Å"
+
+fpvecs = hcat(a*[0.5, 0.5*sqrt(3), 0.0],
+              a*[0.5, -0.5*sqrt(3), 0.0],
+              c*[0.0, 0.0, 1.0]
+             ) |> SMatrix{3,3}
+```
+The basis cell for magnetically active sublattice of fluorapatite contains two F nuclei at positions
+```math
+[0.0,0.0,0.25],\quad [0.0,0.0,0.75],
+```
+and six P nuclei at positions
+```math
+\begin{array}{lll}
+[x,y,0.25], & [1-y,x-y,0.25], & [y-x,1-x,0.25],\\
+[1-x,1-y,0.75], & [y, y-x,0.75], & [x-y, x, 0.75],
+\end{array}
+```
+where ``x=0.369`` and ``y=0.3985``. All the coordinates here are relative to the set of primitive vectors `fpvecs`.
+
+Since we have two different types of nuclei, it is a good idea somehow to separate these two groups of nuclei in the basis cell. In this case, one should use `InhomogeneousCell`.
+```julia
+x = 0.369
+y = 0.3985
+
+cell_vectors_raw1 = [[0.0, 0.0, 0.25], [0.0, 0.0, 0.75]]
+cell_vectors_raw2 = [[x, y, 0.25], [-y, x-y, 0.25], [y-x, -x, 0.25],
+                  [-x, -y, 0.75], [y, y-x, 0.75], [x-y, x, 0.75]]
+
+fcell = InhomogeneousCell([fpvecs*vec for vec in cell_vectors_raw1], [fpvecs*vec for vec in cell_vectors_raw2]; label = :fluorapatite_magnetic)
+```
+Finally, we can construct the lattice. Let us choose the size of ``11\times11\times11`` basis cells and periodic boundary conditions.
+```julia
+fluorapatite_magnetic_sublattice = RegularLattice((11,11,11), fpvecs, fcell; label = :hexagonal)
+```
