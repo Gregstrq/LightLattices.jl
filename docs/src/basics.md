@@ -1,7 +1,8 @@
 # [Basics](@id manual-basics)
 
-LightLattices separates the geometry of a collection from the physical objects
-occupying its sites. It defines two families of collections:
+LightLattices provides an interface to work with a collection of nodes in a cartesian space that are occupied by some physical objects.
+The package separates the geometry of a collection from the species
+occupying the sites. It defines two families of collections:
 
 - **Node collections**, subtypes of `AbstractNodeCollection{D,T}`, describe positions
   and their geometric structure. These include clusters of points and regular

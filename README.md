@@ -25,6 +25,7 @@ There are also convenience functions that allow to iterate over the group of nod
 - [Indexing and iteration](#indexing-and-iteration)
   - [Indexing](#indexing)
   - [Iteration utils](#iteration-utils)
+- [Subcollections and CompositeCollections](#subcollections-and-compositecollections)
 
 ## Constructing physical collections
 
@@ -180,3 +181,9 @@ In some situations, it might be convenient to focus on a single kind of species.
 - `group_size(collection, ig)` returns the total number of nodes in the group;
 - `group_species(collection, ig)` gets the species by the group index `ig`;
 - `num_of_groups(collection)` gives the total number of different groups (species).
+
+## Subcollections and CompositeCollections
+
+The package also provides the means to create a `Subcollection`, which functions like a view into a `PhysicalCollection`, and to compose several `PhysicalCollection`-s and `Subcollections` into a single `CompositeCollection`.
+
+For more details, see [this](https://Gregstrq.github.io/LightLattices.jl/dev/physical_collections/#physical-subcollections) and [this](https://Gregstrq.github.io/LightLattices.jl/dev/physical_collections/#physical-composites) Sections of the docs.
